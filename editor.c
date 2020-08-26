@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
@@ -15,7 +17,8 @@ void enableRawMode ()
 	atexit(disableRawMode);		// diables raw mode at exit of the program
 
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
-	raw.c_lflag &= ~( ECHO | ICANON );		// togalling canonical mode off
+	raw.c_lflag &= ~( ECHO | ICANON | ISIG);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
+
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
 }
 
@@ -24,6 +27,16 @@ int main()
 	enableRawMode();	
 
     char c;
-    while (read(STDIN_FILENO, &c, 1) == 1 && c!='q');
+    while (read(STDIN_FILENO, &c, 1) == 1 && c!='q')
+    {
+    	if(iscntrl(c))
+    	{
+    		printf("%d\n",c);
+    	}
+    	else
+    	{
+    		printf("%d ('%c')\n", c, c);
+    	}
+    }
 	return 0;
 }
