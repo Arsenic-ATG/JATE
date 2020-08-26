@@ -18,6 +18,7 @@ void enableRawMode ()
 
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
 	raw.c_lflag &= ~( ECHO | ICANON | ISIG);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
+	raw.c_iflag &= ~(IXON);		// stoping XON\OFF to pause the transmission
 
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
 }
