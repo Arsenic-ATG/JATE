@@ -6,7 +6,7 @@ struct termios orig_termios;
 
 void disableRawMode ()
 {
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);		// resetting the terminal back to normal
 }
 
 void enableRawMode ()
@@ -15,7 +15,7 @@ void enableRawMode ()
 	atexit(disableRawMode);		// diables raw mode at exit of the program
 
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
-	raw.c_lflag &= ~( ECHO );
+	raw.c_lflag &= ~( ECHO | ICANON );		// togalling canonical mode off
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
 }
 
