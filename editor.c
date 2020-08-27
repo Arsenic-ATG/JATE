@@ -22,6 +22,10 @@ void enableRawMode ()
 	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);		// turning off all rest of the flags
 	raw.c_oflag &= ~(OPOST);		//terminates all output processing 
 	raw.c_oflag |= ~(CS8);		// to set the charater size to 8 bit per byte
+
+	raw.c_cc[VMIN] = 0;		// to set up timeout for input
+  	raw.c_cc[VTIME] = 1;
+
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
 }
 
@@ -29,17 +33,22 @@ int main()
 {
 	enableRawMode();	
 
-    char c;
-    while (read(STDIN_FILENO, &c, 1) == 1 && c!='q')
+    while (1)
     {
+    	char c = '\0';
+
+    	read(STDIN_FILENO, &c, 1);
     	if(iscntrl(c))
     	{
-    		printf("%d\n",c);
+    		printf("%d\r\n",c);
     	}
     	else
     	{
-    		printf("%d ('%c')\n", c, c);
+    		printf("%d ('%c')\r\n", c, c);
     	}
+
+    	if(c == 'q')
+    		break;
     }
 	return 0;
 }
