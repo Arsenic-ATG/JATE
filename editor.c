@@ -1,3 +1,4 @@
+/****************** headers *************************/
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -5,6 +6,8 @@
 #include <unistd.h>
 #include <termios.h>
 
+
+/***************** global variables **********************/
 struct termios orig_termios;
 
 void die(const char *s)
@@ -13,6 +16,7 @@ void die(const char *s)
   exit(1);
 }
 
+/***************** terminal *****************************/
 void disableRawMode ()
 {
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)		// resetting the terminal back to normal
@@ -39,6 +43,7 @@ void enableRawMode ()
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
 }
 
+/************************** main() function *************************/
 int main()
 {
 	enableRawMode();	
