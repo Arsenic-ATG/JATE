@@ -1,19 +1,29 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
 
 struct termios orig_termios;
 
+void die(const char *s)
+{
+  perror(s);
+  exit(1);
+}
+
 void disableRawMode ()
 {
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);		// resetting the terminal back to normal
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)		// resetting the terminal back to normal
+	{
+		die("tcsetattr");
+	}
 }
 
 void enableRawMode ()
 {
-	tcgetattr(STDIN_FILENO, &orig_termios);
+	if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tcgetattr");
 	atexit(disableRawMode);		// diables raw mode at exit of the program
 
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
@@ -26,7 +36,7 @@ void enableRawMode ()
 	raw.c_cc[VMIN] = 0;		// to set up timeout for input
   	raw.c_cc[VTIME] = 1;
 
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
 }
 
 int main()
@@ -37,7 +47,7 @@ int main()
     {
     	char c = '\0';
 
-    	read(STDIN_FILENO, &c, 1);
+    	if(read(STDIN_FILENO, &c, 1) == -1) die("read");
     	if(iscntrl(c))
     	{
     		printf("%d\r\n",c);
