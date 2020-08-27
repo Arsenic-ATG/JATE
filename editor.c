@@ -19,7 +19,9 @@ void enableRawMode ()
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
 	raw.c_lflag &= ~( ECHO | ICANON | ISIG | IEXTEN);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
 	raw.c_iflag &= ~(ICRNL | IXON);		// stoping XON\OFF to pause the transmission also ICRNL for ctrl-m
+	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);		// turning off all rest of the flags
 	raw.c_oflag &= ~(OPOST);		//terminates all output processing 
+	raw.c_oflag |= ~(CS8);		// to set the charater size to 8 bit per byte
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);	// turning on raw mode
 }
 
