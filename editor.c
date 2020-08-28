@@ -6,10 +6,11 @@
 #include <unistd.h>
 #include <termios.h>
 
-
+#define CTRL_KEY(k) ((k) & 0x1f)
 /***************** global variables **********************/
 struct termios orig_termios;
 
+/***************** error handling ************************/
 void die(const char *s)
 {
   perror(s);
