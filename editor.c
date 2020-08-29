@@ -6,7 +6,9 @@
 #include <unistd.h>
 #include <termios.h>
 
+// trying to mirror what the control key does in terminal using bit masking
 #define CTRL_KEY(k) ((k) & 0x1f)
+
 /***************** global variables **********************/
 struct termios orig_termios;
 
@@ -63,7 +65,7 @@ int main()
     		printf("%d ('%c')\r\n", c, c);
     	}
 
-    	if(c == 'q')
+    	if (c == CTRL_KEY('q')) break;     // Ctrl + q to exit 👍
     		break;
     }
 	return 0;
