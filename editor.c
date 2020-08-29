@@ -56,7 +56,7 @@ int main()
     	char c = '\0';
 
     	if(read(STDIN_FILENO, &c, 1) == -1) die("read");
-    	if(iscntrl(c))
+        if(iscntrl(c))
     	{
     		printf("%d\r\n",c);
     	}
@@ -66,7 +66,6 @@ int main()
     	}
 
     	if (c == CTRL_KEY('q')) break;     // Ctrl + q to exit 👍
-    		break;
     }
 	return 0;
 }
