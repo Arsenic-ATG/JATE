@@ -46,6 +46,29 @@ void enableRawMode ()
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
 }
 
+char editor_read_key()
+{
+    char c;
+    if(read(STDIN_FILENO, &c, 1) == -1) die("read");
+    return c;
+}
+
+/************************ input ***********************/
+void editor_process_keypress()
+{
+    char c = editor_read_key();
+    if(iscntrl(c))
+        {
+            printf("%d\r\n",c);
+        }
+    else
+        {
+            printf("%d ('%c')\r\n", c, c);
+        }
+
+    if (c == CTRL_KEY('q')) exit(0);     // Ctrl + q to exit safely 👍
+}
+
 /************************** main() function *************************/
 int main()
 {
@@ -53,19 +76,7 @@ int main()
 
     while (1)
     {
-    	char c = '\0';
-
-    	if(read(STDIN_FILENO, &c, 1) == -1) die("read");
-        if(iscntrl(c))
-    	{
-    		printf("%d\r\n",c);
-    	}
-    	else
-    	{
-    		printf("%d ('%c')\r\n", c, c);
-    	}
-
-    	if (c == CTRL_KEY('q')) break;     // Ctrl + q to exit 👍
+        editor_process_keypress();
     }
 	return 0;
 }
