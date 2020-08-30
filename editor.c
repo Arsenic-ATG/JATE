@@ -20,7 +20,7 @@ void die(const char *s)
 }
 
 /***************** terminal *****************************/
-void disableRawMode ()
+void disable_raw_mode ()
 {
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)		// resetting the terminal back to normal
 	{
@@ -28,10 +28,10 @@ void disableRawMode ()
 	}
 }
 
-void enableRawMode ()
+void enable_raw_mode ()
 {
 	if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tcgetattr");
-	atexit(disableRawMode);		// diables raw mode at exit of the program
+	atexit(disable_raw_mode);		// diables raw mode at exit of the program
 
 	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
 	raw.c_lflag &= ~( ECHO | ICANON | ISIG | IEXTEN);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
@@ -72,7 +72,7 @@ void editor_process_keypress()
 /************************** main() function *************************/
 int main()
 {
-	enableRawMode();	
+	enable_raw_mode();	
 
     while (1)
     {
