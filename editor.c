@@ -49,7 +49,11 @@ void enable_raw_mode ()
 char editor_read_key()
 {
     char c;
-    if(read(STDIN_FILENO, &c, 1) == -1) die("read");
+    int charaters_read;
+    while((charaters_read = read(STDIN_FILENO, &c, 1)) != 1)
+    {
+    	if( charaters_read == -1) die("read");
+    }
     return c;
 }
 
