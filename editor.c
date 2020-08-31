@@ -15,6 +15,9 @@ struct termios orig_termios;
 /***************** error handling ************************/
 void die(const char *s)
 {
+  write(STDOUT_FILENO, "\x1b[2J", 4);
+  write(STDOUT_FILENO, "\x1b[H", 3);
+  
   perror(s);
   exit(1);
 }
@@ -70,7 +73,12 @@ void editor_process_keypress()
             printf("%d ('%c')\r\n", c, c);
         }
 
-    if (c == CTRL_KEY('q')) exit(0);     // Ctrl + q to exit safely 👍
+    if (c == CTRL_KEY('q')) 	// Ctrl + q to exit safely 👍
+    {
+    	write(STDOUT_FILENO, "\x1b[2J", 4);
+  		write(STDOUT_FILENO, "\x1b[H", 3);
+    	exit(0);     
+	}
 }
 /************************* output ****************************/
 void editor_refresh_screen()
