@@ -72,14 +72,19 @@ void editor_process_keypress()
 
     if (c == CTRL_KEY('q')) exit(0);     // Ctrl + q to exit safely 👍
 }
+/************************* output ****************************/
+void editor_refresh_screen()
+{
+	write(STDOUT_FILENO,"\x1b[2J",4);
+}
 
 /************************** main() function *************************/
 int main()
 {
 	enable_raw_mode();	
-
     while (1)
     {
+    	editor_refresh_screen();
         editor_process_keypress();
     }
 	return 0;
