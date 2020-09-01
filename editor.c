@@ -95,15 +95,16 @@ char editor_read_key()
 void editor_process_keypress()
 {
     char c = editor_read_key();
-    if(iscntrl(c))
-        {
-            printf("%d\r\n",c);
-        }
-    else
-        {
-            printf("%d ('%c')\r\n", c, c);
-        }
-
+    
+    // if(iscntrl(c))
+    //     {
+    //         printf("%d\r\n",c);
+    //     }
+    // else
+    //     {
+    //         printf("%d ('%c')\r\n", c, c);
+    //     }
+    
     if (c == CTRL_KEY('q')) 	// Ctrl + q to exit safely 👍
     {
     	write(STDOUT_FILENO, "\x1b[2J", 4);
@@ -115,7 +116,7 @@ void editor_process_keypress()
 void editor_draw_rows()
 {
 	int y;
-	for (y = 0; y < 24; y++) 
+	for (y = 0; y < E.screen_rows; y++) 
 	{
     	write(STDOUT_FILENO, "~\r\n", 3);
   	}
@@ -135,7 +136,7 @@ int main()
 {
 	enable_raw_mode();
 	init_editor();
-	
+
     while (1)
     {
     	editor_refresh_screen();
