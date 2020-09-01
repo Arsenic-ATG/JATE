@@ -10,7 +10,12 @@
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /***************** global variables **********************/
-struct termios orig_termios;
+struct editor_config
+{
+	struct termios orig_termios;
+};
+
+struct editor_config E;
 
 /***************** error handling ************************/
 void die(const char *s)
@@ -25,7 +30,7 @@ void die(const char *s)
 /***************** terminal *****************************/
 void disable_raw_mode ()
 {
-	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)		// resetting the terminal back to normal
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)		// resetting the terminal back to normal
 	{
 		die("tcsetattr");
 	}
@@ -33,10 +38,10 @@ void disable_raw_mode ()
 
 void enable_raw_mode ()
 {
-	if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tcgetattr");
+	if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) die("tcgetattr");
 	atexit(disable_raw_mode);		// diables raw mode at exit of the program
 
-	struct termios raw = orig_termios;		// to make sure that the changes don't take place in global variable
+	struct termios raw = E.orig_termios;		// to make sure that the changes don't take place in global variable
 	raw.c_lflag &= ~( ECHO | ICANON | ISIG | IEXTEN);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
 	raw.c_iflag &= ~(ICRNL | IXON);		// stoping XON\OFF to pause the transmission also ICRNL for ctrl-m
 	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);		// turning off all rest of the flags
