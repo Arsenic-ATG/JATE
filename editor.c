@@ -13,12 +13,15 @@
 /***************** global variables **********************/
 struct editor_config
 {
+	int screen_rows;
+	int screen_cols;
 	struct termios orig_termios;
 };
 
 struct editor_config E;
 
 /***************** error handling ************************/
+
 void die(const char *s)
 {
   write(STDOUT_FILENO, "\x1b[2J", 4);
@@ -29,6 +32,28 @@ void die(const char *s)
 }
 
 /***************** terminal *****************************/
+
+int get_windows_size(int *rows,int *cols)
+{
+	struct winsize ws;
+
+	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)		// not possible to resize the window of that size
+	{
+		return -1;
+	}
+	else		// returns the current screen size of the terminal window
+	{
+		*rows = ws.ws_row;
+		*cols = ws.ws_col;
+		return 0;
+	}
+}
+
+void init_editor()
+{
+	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) die("get_windows_size");
+}
+
 void disable_raw_mode ()
 {
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)		// resetting the terminal back to normal
@@ -53,22 +78,6 @@ void enable_raw_mode ()
   	raw.c_cc[VTIME] = 1;
 
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
-}
-
-int get_windows_size(int *rows,int *cols)
-{
-	struct winsize ws;
-
-	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)		// not possible to resize the window of that size
-	{
-		return -1;
-	}
-	else
-	{
-		*rows = ws.ws_row;
-		*cols = ws.ws_col;
-		return 0;
-	}
 }
 
 char editor_read_key()
@@ -124,7 +133,9 @@ void editor_refresh_screen()
 /************************** main() function *************************/
 int main()
 {
-	enable_raw_mode();	
+	enable_raw_mode();
+	init_editor();
+	
     while (1)
     {
     	editor_refresh_screen();
