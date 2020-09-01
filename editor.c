@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
 
@@ -52,6 +53,22 @@ void enable_raw_mode ()
   	raw.c_cc[VTIME] = 1;
 
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
+}
+
+int get_windows_size(int *rows,int *cols)
+{
+	struct winsize ws;
+
+	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)		// not possible to resize the window of that size
+	{
+		return -1;
+	}
+	else
+	{
+		*rows = ws.ws_row;
+		*cols = ws.ws_col;
+		return 0;
+	}
 }
 
 char editor_read_key()
