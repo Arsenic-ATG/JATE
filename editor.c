@@ -32,28 +32,6 @@ void die(const char *s)
 }
 
 /***************** terminal *****************************/
-
-int get_windows_size(int *rows,int *cols)
-{
-	struct winsize ws;
-
-	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)		// not possible to resize the window of that size
-	{
-		return -1;
-	}
-	else		// returns the current screen size of the terminal window
-	{
-		*rows = ws.ws_row;
-		*cols = ws.ws_col;
-		return 0;
-	}
-}
-
-void init_editor()
-{
-	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) die("get_windows_size");
-}
-
 void disable_raw_mode ()
 {
 	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)		// resetting the terminal back to normal
@@ -91,6 +69,31 @@ char editor_read_key()
     return c;
 }
 
+int get_windows_size(int *rows,int *cols)
+{
+	struct winsize ws;
+
+	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
+	{
+		if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) return -1;
+    		{
+    			editor_read_key();
+				return -1;
+			}
+	}
+	else		// returns the current screen size of the terminal window
+	{
+		*rows = ws.ws_row;
+		*cols = ws.ws_col;
+		return 0;
+	}
+}
+
+void init_editor()
+{
+	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) die("get_windows_size");
+}
+
 /************************ input ***********************/
 void editor_process_keypress()
 {
@@ -105,7 +108,7 @@ void editor_process_keypress()
     //         printf("%d ('%c')\r\n", c, c);
     //     }
     
-    if (c == CTRL_KEY('q')) 	// Ctrl + q to exit safely 👍
+    if (c == CTRL_KEY('q')) 	// Ctrl/Cmd + q to exit safely 👍
     {
     	write(STDOUT_FILENO, "\x1b[2J", 4);
   		write(STDOUT_FILENO, "\x1b[H", 3);
