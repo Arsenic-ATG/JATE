@@ -1,5 +1,5 @@
-# text-editor
-I am attempting to make a text editor using pure **C** (without any depedencies).
+# Text-Editor
+I am attempting to make a fully functional text editor using pure **C** (without any depedencies).
 
 ## Status : { 👷‍♂️under construction }
 
