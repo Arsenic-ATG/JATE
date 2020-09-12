@@ -76,10 +76,10 @@ int get_windows_size(int *rows,int *cols)
 	if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
 	{
 		if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) return -1;
-    		{
-    			editor_read_key();
-				return -1;
-			}
+    		
+    	editor_read_key();
+		return -1;		// for testing purposes
+			
 	}
 	else		// returns the current screen size of the terminal window
 	{
