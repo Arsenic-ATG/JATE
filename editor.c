@@ -168,6 +168,8 @@ void editor_process_keypress()
 }
 
 /************************* output ****************************/
+
+// using append buffer to paint to prevent flickring while typing
 void editor_draw_rows(struct abuf *ab)
 {
 	int y;
@@ -187,9 +189,14 @@ void editor_refresh_screen()
 {
 	struct abuf ab = ABUF_INIT;
 
+	ab_append(&ab, "\x1b[?25l", 6);		// to hide the cursor while typing
 	ab_append(&ab,"\x1b[2J",4);
-	editor_draw_rows(&ab);
 	ab_append(&ab, "\x1b[H", 3);
+
+	editor_draw_rows(&ab);
+
+	ab_append(&ab, "\x1b[H", 3);
+	ab_append(&ab, "\x1b[?25l", 6);
 
 	write(STDOUT_FILENO,ab.b,ab.len);
 	ab_free(&ab);
