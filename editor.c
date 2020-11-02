@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
@@ -114,6 +115,34 @@ int get_windows_size(int *rows,int *cols)
 void init_editor()
 {
 	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) die("get_windows_size");
+}
+
+/************************append buffer********************/
+
+struct abuf 
+{
+	char *b;
+	int len;
+};
+
+// constructor
+#define ABUF_INIT {NULL, 0}
+
+void ab_append(struct abuf *ab,const char *str,int len)
+{
+  char *new = realloc(ab->b, ab->len + len);
+
+  if (new == NULL) return;
+
+  memcpy(&new[ab->len], str, len);
+  ab->b = new;
+  ab->len += len;
+}
+
+// desctructor
+void ab_free(struct abuf *ab)
+{
+	free(ab->b);
 }
 
 /************************ input ***********************/
