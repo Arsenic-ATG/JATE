@@ -166,23 +166,33 @@ void editor_process_keypress()
     	exit(0);     
 	}
 }
+
 /************************* output ****************************/
-void editor_draw_rows()
+void editor_draw_rows(struct abuf *ab)
 {
 	int y;
 	for (y = 0; y < E.screen_rows; y++) 
 	{
-    	write(STDOUT_FILENO, "~\r\n", 3);
+    	ab_append(ab, "~", 1);
   	}
+
+  	if (y < E.screen_rows - 1) 
+  	{
+      ab_append(ab, "\r\n", 2);
+    }
 }
 
+// formatting requres imoprovement here
 void editor_refresh_screen()
 {
-	write(STDOUT_FILENO,"\x1b[2J",4);
+	struct abuf ab = ABUF_INIT;
 
-	editor_draw_rows();
-	
-	write(STDOUT_FILENO, "\x1b[H", 3);
+	ab_append(&ab,"\x1b[2J",4);
+	editor_draw_rows(&ab);
+	ab_append(&ab, "\x1b[H", 3);
+
+	write(STDOUT_FILENO,ab.b,ab.len);
+	ab_free(&ab);
 }
 
 /************************** main() function *************************/
