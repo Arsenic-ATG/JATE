@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-// trying to mirror what the control key does in terminal using bit masking
+// attmpet to mirror what the ctrl key does in terminal using bit masking
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /***************** global variables **********************/
@@ -35,7 +35,7 @@ void die(const char *s)
 /***************** terminal *****************************/
 void disable_raw_mode ()
 {
-	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)		// resetting the terminal back to normal
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)
 	{
 		die("tcsetattr");
 	}
@@ -44,19 +44,26 @@ void disable_raw_mode ()
 void enable_raw_mode ()
 {
 	if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) die("tcgetattr");
-	atexit(disable_raw_mode);		// diables raw mode at exit of the program
+	atexit(disable_raw_mode);
 
-	struct termios raw = E.orig_termios;		// to make sure that the changes don't take place in global variable
-	raw.c_lflag &= ~( ECHO | ICANON | ISIG | IEXTEN);		// togalling canonical mode off and also tacking the problem with SIGCONT and SIGSTP
-	raw.c_iflag &= ~(ICRNL | IXON);		// stoping XON\OFF to pause the transmission also ICRNL for ctrl-m
-	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);		// turning off all rest of the flags
-	raw.c_oflag &= ~(OPOST);		//terminates all output processing 
-	raw.c_oflag |= ~(CS8);		// to set the charater size to 8 bit per byte
+	// make sure that the changes don't take place in global variable
+	struct termios raw = E.orig_termios;		
+	// togal canonical mode off and also tacking the problem with SIGCONT and SIGSTP
+	raw.c_lflag &= ~( ECHO | ICANON | ISIG | IEXTEN);		
+	// stop XON\OFF to pause the transmission also ICRNL for ctrl-m
+	raw.c_iflag &= ~(ICRNL | IXON);		
+	// turn off all rest of the flags
+	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);	
+	// terminate all output processing 
+	raw.c_oflag &= ~(OPOST);	
+	// set the charater size to 8 bit per byte
+	raw.c_oflag |= ~(CS8);		
 
-	raw.c_cc[VMIN] = 0;		// to set up timeout for input
+	// to set up timeout for input
+	raw.c_cc[VMIN] = 0;		
   	raw.c_cc[VTIME] = 1;
 
-	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");	// turning on raw mode
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");
 }
 
 char editor_read_key()
@@ -104,7 +111,7 @@ int get_windows_size(int *rows,int *cols)
 		// return -1;		// for testing purposes
 			
 	}
-	else		// returns the current screen size of the terminal window
+	else		// return the current screen size of the terminal window
 	{
 		*rows = ws.ws_row;
 		*cols = ws.ws_col;
@@ -150,6 +157,7 @@ void editor_process_keypress()
 {
     char c = editor_read_key();
     
+    // 
     // if(iscntrl(c))
     //     {
     //         printf("%d\r\n",c);
@@ -189,7 +197,9 @@ void editor_refresh_screen()
 {
 	struct abuf ab = ABUF_INIT;
 
-	ab_append(&ab, "\x1b[?25l", 6);		// to hide the cursor while typing
+	//hide the cursor while typing
+	ab_append(&ab, "\x1b[?25l", 6);
+
 	ab_append(&ab,"\x1b[2J",4);
 	ab_append(&ab, "\x1b[H", 3);
 
