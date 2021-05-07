@@ -1,5 +1,7 @@
 # Text-Editor
-I am attempting to make a fully functional text editor using pure **C** (preferably without any depedencies).
+attempt to make a fully fundtional bare bones text editor in C ( withough any dependencies by direcly manipulating terminal via [VT100](https://vt100.net) escape sequences ) 
+
+insipred from [kilo text editor](https://github.com/antirez/kilo)
 
 ## Status : { 👷‍♂️ Under construction}
 
