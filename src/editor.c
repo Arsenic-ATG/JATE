@@ -161,6 +161,14 @@ void editor_draw_rows(struct abuf *ab)
 			if (message_length > E.screen_cols)
 				message_length = E.screen_cols;
 
+			// subracting one for first ">" character
+			int spacing = ((E.screen_cols - message_length)/2) - 1;
+			ab_append(ab,">",1);
+			for (int i = 0; i < spacing; ++i)
+			{
+				ab_append(ab," ",1);
+			}
+
 			ab_append(ab,welcome_buffer,message_length);
 		}
 
