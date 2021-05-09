@@ -26,11 +26,11 @@ struct editor_config E;
 
 void die(const char *s)
 {
-  write(STDOUT_FILENO, "\x1b[2J", 4);
-  write(STDOUT_FILENO, "\x1b[H", 3);
+	write(STDOUT_FILENO, "\x1b[2J", 4);
+	write(STDOUT_FILENO, "\x1b[H", 3);
 
-  perror(s);
-  exit(1);
+	perror(s);
+	exit(1);
 }
 
 /***************** terminal *****************************/
@@ -49,7 +49,7 @@ void enable_raw_mode ()
 
 	// make sure that the changes don't take place in global variable
 	struct termios raw = E.orig_termios;
-	
+
 	// togal canonical mode off and also tacking the problem with SIGCONT and SIGSTP
 	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
   	raw.c_oflag &= ~(OPOST);
@@ -128,15 +128,14 @@ struct abuf
 
 void ab_append(struct abuf *ab,const char *str,int len)
 {
-  char *new = realloc(ab->b, ab->len + len);
+	char *new = realloc(ab->b, ab->len + len);
 
-  if (new == NULL) 
-  	return;
+	if (new == NULL) 
+		return;
 
-  memcpy(&new[ab->len], str, len);
-  ab->b = new;
-  ab->len += len;
-
+	memcpy(&new[ab->len], str, len);
+	ab->b = new;
+	ab->len += len;
 }
 
 // desctructor
@@ -153,7 +152,23 @@ void editor_draw_rows(struct abuf *ab)
 	int y;
 	for (y = 0; y < E.screen_rows; y++) 
 	{
-    	ab_append(ab, "~", 1);
+		// welcome mesage
+		if (y == E.screen_rows/8)
+		{
+			char welcome_buffer[60];
+			int message_length = snprintf ( welcome_buffer, sizeof(welcome_buffer) , "Welcome the the Text Editor " );
+
+			if (message_length > E.screen_cols)
+				message_length = E.screen_cols;
+
+			ab_append(ab,welcome_buffer,message_length);
+		}
+
+		else
+		{
+			// start of new line
+	    	ab_append(ab, ">", 1);
+	    }
     	// clear in line
 		ab_append(ab, "\x1b[K", 3);
 
@@ -194,9 +209,11 @@ void editor_process_keypress()
     }
 }
 
+/************************** init *************************/
 void init_editor()
 {
-	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) die("get_windows_size");
+	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) 
+		die("get_windows_size");
 }
 
 /************************** main() function *************************/
