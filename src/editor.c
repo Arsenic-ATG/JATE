@@ -15,6 +15,7 @@
 /***************** global variables **********************/
 struct editor_config
 {
+	int cursor_x,cursor_y;
 	int screen_rows;
 	int screen_cols;
 	struct termios orig_termios;
@@ -196,32 +197,69 @@ void editor_refresh_screen()
 
 	editor_draw_rows(&ab);
 
-	ab_append(&ab, "\x1b[H", 3);
-	ab_append(&ab, "\x1b[?25l", 6);
+	char cursor_buff[32];
+	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH", E.cursor_y + 1, E.cursor_x + 1);
+	ab_append(&ab, cursor_buff, len);
+
+	ab_append(&ab, "\x1b[?25h", 6);
 
 	write(STDOUT_FILENO,ab.b,ab.len);
 	ab_free(&ab);
 }
 
 /************************ input ***********************/
+
+void editor_navigate_cursor(char key) 
+{
+	// navigating via wasd
+	switch (key) 
+	{
+		case 'a':
+			E.cursor_x--;
+			break;
+		case 'd':
+			E.cursor_x++;
+			break;
+		case 'w':
+			E.cursor_y--;
+			break;
+		case 's':
+			E.cursor_y++;
+			break;
+	}
+}
+
 void editor_process_keypress()
 {
     char c = editor_read_key();
     
     switch(c)
     {
-    	case CTRL_KEY('q'): write(STDOUT_FILENO, "\x1b[2J", 4);
-  							write(STDOUT_FILENO, "\x1b[H", 3);
-    						exit(0);
-    						break;
+    	case CTRL_KEY('q'): 
+    		write(STDOUT_FILENO, "\x1b[2J", 4);
+			write(STDOUT_FILENO, "\x1b[H", 3);
+			exit(0);
+			break;
+
+		case 'w':
+		case 'a':
+		case 's':
+		case 'd':
+			editor_navigate_cursor(c);
+			break;
+
     }
 }
 
 /************************** init *************************/
 void init_editor()
-{
+{	
 	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) 
 		die("get_windows_size");
+
+	E.cursor_x = 0;
+	E.cursor_y = 0;
+
 }
 
 /************************** main() function *************************/
