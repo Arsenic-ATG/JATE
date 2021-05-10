@@ -13,6 +13,15 @@
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /***************** global variables **********************/
+
+enum arrow_key
+{
+	ARROW_UP = -1,
+	ARROW_DOWN ,
+	ARROW_LEFT ,
+	ARROW_RIGHT
+};
+
 struct editor_config
 {
 	int cursor_x,cursor_y;
@@ -71,9 +80,34 @@ char editor_read_key()
     while(charaters_read != 1)
     {
     	charaters_read = read(STDIN_FILENO, &c, 1);
-    	if( charaters_read == -1) die("read");
+    	if( charaters_read == -1) 
+    		die("read");
     }
-    return c;
+
+    // reading escape sequence
+    if (c == '\x1b') 
+    {
+	    char seq[3];
+	    if (read(STDIN_FILENO, &seq[0], 1) != 1) 
+	    	return '\x1b';
+
+	    if (read(STDIN_FILENO, &seq[1], 1) != 1) 
+	    	return '\x1b';
+
+	    if (seq[0] == '[') 
+	    {
+			switch (seq[1]) 
+			{
+				case 'A': return ARROW_UP;
+				case 'B': return ARROW_DOWN;
+				case 'C': return ARROW_RIGHT;
+				case 'D': return ARROW_LEFT;
+			}
+   		}
+    	return '\x1b';
+  	} 
+  	else
+    	return c;
 }
 
 int get_cursor_position(int *rows,int *cols)
@@ -116,7 +150,7 @@ int get_windows_size(int *rows,int *cols)
 	}
 }
 
-/************************append buffer********************/
+/************************ append buffer ********************/
 
 struct abuf 
 {
@@ -214,16 +248,16 @@ void editor_navigate_cursor(char key)
 	// navigating via wasd
 	switch (key) 
 	{
-		case 'a':
+		case ARROW_LEFT:
 			E.cursor_x--;
 			break;
-		case 'd':
+		case ARROW_RIGHT:
 			E.cursor_x++;
 			break;
-		case 'w':
+		case ARROW_UP:
 			E.cursor_y--;
 			break;
-		case 's':
+		case ARROW_DOWN:
 			E.cursor_y++;
 			break;
 	}
@@ -241,10 +275,10 @@ void editor_process_keypress()
 			exit(0);
 			break;
 
-		case 'w':
-		case 'a':
-		case 's':
-		case 'd':
+		case ARROW_LEFT:
+		case ARROW_RIGHT:
+		case ARROW_DOWN:
+		case ARROW_UP:
 			editor_navigate_cursor(c);
 			break;
 
