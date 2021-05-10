@@ -297,7 +297,6 @@ void init_editor()
 
 	E.cursor_x = 0;
 	E.cursor_y = 0;
-
 }
 
 /************************** main() function *************************/
