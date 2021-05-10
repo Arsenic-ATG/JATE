@@ -249,16 +249,20 @@ void editor_navigate_cursor(char key)
 	switch (key) 
 	{
 		case ARROW_LEFT:
-			E.cursor_x--;
+			if(E.cursor_x != 0)
+				E.cursor_x--;
 			break;
 		case ARROW_RIGHT:
-			E.cursor_x++;
+			if(E.cursor_x < E.screen_cols - 1)
+				E.cursor_x++;
 			break;
 		case ARROW_UP:
-			E.cursor_y--;
+			if(E.cursor_y != 0)
+				E.cursor_y--;
 			break;
 		case ARROW_DOWN:
-			E.cursor_y++;
+			if(E.cursor_y < E.screen_rows - 1)
+				E.cursor_y++;
 			break;
 	}
 }
