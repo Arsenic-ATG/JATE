@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <termios.h>
-
+#include <assert.h>
 
 // attmpet to mirror what the ctrl key does in terminal using bit masking
 #define CTRL_KEY(k) ((k) & 0x1f)
@@ -63,7 +63,9 @@ void disable_raw_mode ()
 
 void enable_raw_mode ()
 {
-	if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) die("tcgetattr");
+	if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) 
+		die("tcgetattr");
+
 	atexit(disable_raw_mode);
 
 	// make sure that the changes don't take place in global variable
@@ -79,13 +81,15 @@ void enable_raw_mode ()
 	raw.c_cc[VMIN] = 0;		
   	raw.c_cc[VTIME] = 1;
 
-	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) die("tcgetattr");
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) 
+		die("tcgetattr");
 }
 
 char editor_read_key()
 {
     char c;
     int charaters_read = read(STDIN_FILENO, &c, 1);
+
     while(charaters_read != 1)
     {
     	charaters_read = read(STDIN_FILENO, &c, 1);
@@ -114,7 +118,8 @@ char editor_read_key()
 			}
    		}
     	return '\x1b';
-  	} 
+  	}
+
   	else
     	return c;
 }
@@ -124,23 +129,28 @@ int get_cursor_position(int *rows,int *cols)
 	char buf[32];
 	unsigned int i = 0;
 
-	if (write(STDOUT_FILENO, "\x1b[6n", 4) != 4) return -1;
+	if (write(STDOUT_FILENO, "\x1b[6n", 4) != 4)
+		return -1;
 
 	while(i < sizeof(buf) - 1)
 	{
-		if (read(STDIN_FILENO,&buf[i],1) != 1) break;
-		else if (buf[i] == 'R') break;
+		if (read(STDIN_FILENO,&buf[i],1) != 1) 
+			break;
+		else if (buf[i] == 'R') 
+			break;
 		i++;
 	}
 	buf[i] = '\0';
 
-	if (buf[0] != '\x1b' || buf[1] != '[') return -1;
-	if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) return -1;
+	if (buf[0] != '\x1b' || buf[1] != '[')
+		return -1;
+	if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) 
+		return -1;
 	 
 	return 0;
 }
 
-int get_windows_size(int *rows,int *cols)
+int get_windows_size(int *rows, int *cols)
 {
 	struct winsize ws;
 
@@ -160,16 +170,32 @@ int get_windows_size(int *rows,int *cols)
 }
 /************************ file i/o ********************/
 
-void editor_open()
+void editor_open(const char* file_name)
 {
-	char *line = "Test string";
-	ssize_t linelen = 11;
+	FILE *fp = fopen(file_name, "r");
 
-	E.row.size = linelen;
-	E.row.text = malloc(linelen + 1);
-	memcpy(E.row.text, line, linelen);
-	E.row.text[linelen] = '\0';
-	E.num_rows = 1;
+	if (!fp) 
+		die("fopen");
+
+	char *line = NULL;
+	size_t linecap = 0;
+	ssize_t linelen;
+	linelen = getline(&line, &linecap, fp);
+
+	if (linelen != -1) 
+	{
+		while (linelen > 0 && (line[linelen - 1] == '\n' || line[linelen - 1] == '\r'))
+			linelen--;
+
+		E.row.size = linelen;
+		E.row.text = malloc(linelen + 1);
+		memcpy(E.row.text, line, linelen);
+		E.row.text[linelen] = '\0';
+		E.num_rows = 1;
+	}
+
+	free(line);
+	fclose(fp);
 }
 
 /************************ append buffer ********************/
@@ -327,7 +353,7 @@ void editor_process_keypress()
 /************************** init *************************/
 void init_editor()
 {	
-	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) 
+	if(get_windows_size(&E.screen_rows,&E.screen_cols) == -1) 
 		die("get_windows_size");
 
 	E.cursor_x = 0;
@@ -341,7 +367,7 @@ int main()
 {
 	enable_raw_mode();
 	init_editor();
-	editor_open();
+	editor_open("/Users/ankursaini/Desktop/test_file.txt");
 
     while (1)
     {
