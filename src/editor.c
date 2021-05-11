@@ -35,7 +35,7 @@ struct editor_config
 	int screen_rows;
 	int screen_cols;
 	int num_rows;
-	e_row row;
+	e_row *row;
 	struct termios orig_termios;
 };
 
@@ -168,6 +168,21 @@ int get_windows_size(int *rows, int *cols)
 		return 0;
 	}
 }
+
+/************************ row operations ********************/
+
+void editor_append_row(char *s, size_t len) 
+{
+	E.row = realloc(E.row, sizeof(e_row) * (E.num_rows + 1));
+
+	int at = E.num_rows;
+	E.row[at].size = len;
+	E.row[at].text = malloc(len + 1);
+	memcpy(E.row[at].text, s, len);
+	E.row[at].text[len] = '\0';
+	E.num_rows++;
+}
+
 /************************ file i/o ********************/
 
 void editor_open(const char* file_name)
@@ -182,16 +197,14 @@ void editor_open(const char* file_name)
 	ssize_t linelen;
 	linelen = getline(&line, &linecap, fp);
 
-	if (linelen != -1) 
+	while( linelen != -1 )
 	{
 		while (linelen > 0 && (line[linelen - 1] == '\n' || line[linelen - 1] == '\r'))
 			linelen--;
 
-		E.row.size = linelen;
-		E.row.text = malloc(linelen + 1);
-		memcpy(E.row.text, line, linelen);
-		E.row.text[linelen] = '\0';
-		E.num_rows = 1;
+		editor_append_row(line, linelen);
+		
+		linelen = getline(&line, &linecap, fp);
 	}
 
 	free(line);
@@ -238,7 +251,7 @@ void editor_draw_rows(struct abuf *ab)
 		// welcome mesage
 		if(y >= E.num_rows)
 		{
-			if (y == E.screen_rows/8)
+			if (E.num_rows == 0 && y == E.screen_rows/8)
 			{
 				char welcome_buffer[60];
 				int message_length = snprintf ( welcome_buffer, sizeof(welcome_buffer) , "Welcome the the Text Editor " );
@@ -265,12 +278,12 @@ void editor_draw_rows(struct abuf *ab)
 
 		else
 		{
-			int len = E.row.size;
+			int len = E.row[y].size;
 
 			if (len > E.screen_cols)
 				len = E.screen_cols;
 
-			ab_append(ab, E.row.text, len);
+			ab_append(ab, E.row[y].text, len);
 		}
 
     	// clear in line
@@ -359,6 +372,7 @@ void init_editor()
 	E.cursor_x = 0;
 	E.cursor_y = 0;
 	E.num_rows = 0;
+	E.row = NULL;
 
 }
 
