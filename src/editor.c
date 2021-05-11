@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <termios.h>
 
@@ -14,7 +15,7 @@
 
 /***************** global variables **********************/
 
-enum arrow_key
+enum key
 {
 	ARROW_UP = -1,
 	ARROW_DOWN ,
@@ -22,11 +23,19 @@ enum arrow_key
 	ARROW_RIGHT
 };
 
+typedef struct editor_row 
+{
+	int size;
+	char *text;
+}e_row;
+
 struct editor_config
 {
 	int cursor_x,cursor_y;
 	int screen_rows;
 	int screen_cols;
+	int num_rows;
+	e_row row;
 	struct termios orig_termios;
 };
 
@@ -149,6 +158,19 @@ int get_windows_size(int *rows,int *cols)
 		return 0;
 	}
 }
+/************************ file i/o ********************/
+
+void editor_open()
+{
+	char *line = "Test string";
+	ssize_t linelen = 11;
+
+	E.row.size = linelen;
+	E.row.text = malloc(linelen + 1);
+	memcpy(E.row.text, line, linelen);
+	E.row.text[linelen] = '\0';
+	E.num_rows = 1;
+}
 
 /************************ append buffer ********************/
 
@@ -188,30 +210,43 @@ void editor_draw_rows(struct abuf *ab)
 	for (y = 0; y < E.screen_rows; y++) 
 	{
 		// welcome mesage
-		if (y == E.screen_rows/8)
+		if(y >= E.num_rows)
 		{
-			char welcome_buffer[60];
-			int message_length = snprintf ( welcome_buffer, sizeof(welcome_buffer) , "Welcome the the Text Editor " );
-
-			if (message_length > E.screen_cols)
-				message_length = E.screen_cols;
-
-			// subracting one for first ">" character
-			int spacing = ((E.screen_cols - message_length)/2) - 1;
-			ab_append(ab,">",1);
-			for (int i = 0; i < spacing; ++i)
+			if (y == E.screen_rows/8)
 			{
-				ab_append(ab," ",1);
-			}
+				char welcome_buffer[60];
+				int message_length = snprintf ( welcome_buffer, sizeof(welcome_buffer) , "Welcome the the Text Editor " );
 
-			ab_append(ab,welcome_buffer,message_length);
+				if (message_length > E.screen_cols)
+					message_length = E.screen_cols;
+
+				// subracting one for first ">" character
+				int spacing = ((E.screen_cols - message_length)/2) - 1;
+				ab_append(ab,">",1);
+				for (int i = 0; i < spacing; ++i)
+				{
+					ab_append(ab," ",1);
+				}
+
+				ab_append(ab,welcome_buffer,message_length);
+			}
+			else
+			{
+				// start of new line
+		    	ab_append(ab, ">", 1);
+		    }
 		}
 
 		else
 		{
-			// start of new line
-	    	ab_append(ab, ">", 1);
-	    }
+			int len = E.row.size;
+
+			if (len > E.screen_cols)
+				len = E.screen_cols;
+
+			ab_append(ab, E.row.text, len);
+		}
+
     	// clear in line
 		ab_append(ab, "\x1b[K", 3);
 
@@ -297,6 +332,8 @@ void init_editor()
 
 	E.cursor_x = 0;
 	E.cursor_y = 0;
+	E.num_rows = 0;
+
 }
 
 /************************** main() function *************************/
@@ -304,6 +341,7 @@ int main()
 {
 	enable_raw_mode();
 	init_editor();
+	editor_open();
 
     while (1)
     {
