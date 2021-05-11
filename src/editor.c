@@ -13,8 +13,18 @@
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /***************** global variables **********************/
+
+enum arrow_key
+{
+	ARROW_UP = -1,
+	ARROW_DOWN ,
+	ARROW_LEFT ,
+	ARROW_RIGHT
+};
+
 struct editor_config
 {
+	int cursor_x,cursor_y;
 	int screen_rows;
 	int screen_cols;
 	struct termios orig_termios;
@@ -70,9 +80,34 @@ char editor_read_key()
     while(charaters_read != 1)
     {
     	charaters_read = read(STDIN_FILENO, &c, 1);
-    	if( charaters_read == -1) die("read");
+    	if( charaters_read == -1) 
+    		die("read");
     }
-    return c;
+
+    // reading escape sequence
+    if (c == '\x1b') 
+    {
+	    char seq[3];
+	    if (read(STDIN_FILENO, &seq[0], 1) != 1) 
+	    	return '\x1b';
+
+	    if (read(STDIN_FILENO, &seq[1], 1) != 1) 
+	    	return '\x1b';
+
+	    if (seq[0] == '[') 
+	    {
+			switch (seq[1]) 
+			{
+				case 'A': return ARROW_UP;
+				case 'B': return ARROW_DOWN;
+				case 'C': return ARROW_RIGHT;
+				case 'D': return ARROW_LEFT;
+			}
+   		}
+    	return '\x1b';
+  	} 
+  	else
+    	return c;
 }
 
 int get_cursor_position(int *rows,int *cols)
@@ -115,7 +150,7 @@ int get_windows_size(int *rows,int *cols)
 	}
 }
 
-/************************append buffer********************/
+/************************ append buffer ********************/
 
 struct abuf 
 {
@@ -196,32 +231,72 @@ void editor_refresh_screen()
 
 	editor_draw_rows(&ab);
 
-	ab_append(&ab, "\x1b[H", 3);
-	ab_append(&ab, "\x1b[?25l", 6);
+	char cursor_buff[32];
+	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH", E.cursor_y + 1, E.cursor_x + 1);
+	ab_append(&ab, cursor_buff, len);
+
+	ab_append(&ab, "\x1b[?25h", 6);
 
 	write(STDOUT_FILENO,ab.b,ab.len);
 	ab_free(&ab);
 }
 
 /************************ input ***********************/
+
+void editor_navigate_cursor(char key) 
+{
+	// navigating via wasd
+	switch (key) 
+	{
+		case ARROW_LEFT:
+			if(E.cursor_x != 0)
+				E.cursor_x--;
+			break;
+		case ARROW_RIGHT:
+			if(E.cursor_x < E.screen_cols - 1)
+				E.cursor_x++;
+			break;
+		case ARROW_UP:
+			if(E.cursor_y != 0)
+				E.cursor_y--;
+			break;
+		case ARROW_DOWN:
+			if(E.cursor_y < E.screen_rows - 1)
+				E.cursor_y++;
+			break;
+	}
+}
+
 void editor_process_keypress()
 {
     char c = editor_read_key();
     
     switch(c)
     {
-    	case CTRL_KEY('q'): write(STDOUT_FILENO, "\x1b[2J", 4);
-  							write(STDOUT_FILENO, "\x1b[H", 3);
-    						exit(0);
-    						break;
+    	case CTRL_KEY('q'): 
+    		write(STDOUT_FILENO, "\x1b[2J", 4);
+			write(STDOUT_FILENO, "\x1b[H", 3);
+			exit(0);
+			break;
+
+		case ARROW_LEFT:
+		case ARROW_RIGHT:
+		case ARROW_DOWN:
+		case ARROW_UP:
+			editor_navigate_cursor(c);
+			break;
+
     }
 }
 
 /************************** init *************************/
 void init_editor()
-{
+{	
 	if(get_windows_size(&E.screen_rows,&E.screen_cols)== -1) 
 		die("get_windows_size");
+
+	E.cursor_x = 0;
+	E.cursor_y = 0;
 }
 
 /************************** main() function *************************/
