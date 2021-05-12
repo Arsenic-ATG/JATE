@@ -332,7 +332,7 @@ void editor_refresh_screen()
 	char cursor_buff[32];
 	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH",  (E.cursor_y - E.row_offset) + 1, 
 														(E.cursor_x - E.col_offset) + 1);
-	
+
 	ab_append(&ab, cursor_buff, len);
 
 	ab_append(&ab, "\x1b[?25h", 6);
@@ -345,6 +345,8 @@ void editor_refresh_screen()
 
 void editor_navigate_cursor(char key) 
 {
+	e_row *row = (E.cursor_y >= E.num_rows) ? NULL : &E.row[E.cursor_y];
+
 	// navigating via wasd
 	switch (key) 
 	{
@@ -353,7 +355,7 @@ void editor_navigate_cursor(char key)
 				E.cursor_x--;
 			break;
 		case ARROW_RIGHT:
-		//	if(E.cursor_x < E.screen_cols - 1)
+			if(row && E.cursor_x < row->size)
 				E.cursor_x++;
 			break;
 		case ARROW_UP:
