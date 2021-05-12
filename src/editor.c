@@ -10,7 +10,7 @@
 #include <termios.h>
 #include <assert.h>
 
-// attmpet to mirror what the ctrl key does in terminal using bit masking
+// attmpt to mirror what the ctrl key does in terminal using bit masking
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /***************** global variables **********************/
@@ -35,6 +35,7 @@ struct editor_config
 	int screen_rows;
 	int screen_cols;
 	int num_rows;
+	int row_offset;
 	e_row *row;
 	struct termios orig_termios;
 };
@@ -97,7 +98,7 @@ char editor_read_key()
     		die("read");
     }
 
-    // reading escape sequence
+    // read escape sequence
     if (c == '\x1b') 
     {
 	    char seq[3];
@@ -203,7 +204,7 @@ void editor_open(const char* file_name)
 			linelen--;
 
 		editor_append_row(line, linelen);
-		
+
 		linelen = getline(&line, &linecap, fp);
 	}
 
@@ -242,15 +243,25 @@ void ab_free(struct abuf *ab)
 
 /************************* output ****************************/
 
+void editorScroll() 
+{
+	if (E.cursor_y < E.row_offset) 
+		E.row_offset = E.cursor_y;
+
+	if (E.cursor_y >= E.row_offset + E.screen_rows) 
+		E.row_offset = E.cursor_y - E.screen_rows + 1;
+}
+
 // using append buffer to paint to prevent flickring while typing
 void editor_draw_rows(struct abuf *ab)
 {
 	int y;
 	for (y = 0; y < E.screen_rows; y++) 
 	{
-		// welcome mesage
-		if(y >= E.num_rows)
+		int filerow = y + E.row_offset;
+		if(filerow >= E.num_rows)
 		{
+			// welcome mesage
 			if (E.num_rows == 0 && y == E.screen_rows/8)
 			{
 				char welcome_buffer[60];
@@ -278,12 +289,12 @@ void editor_draw_rows(struct abuf *ab)
 
 		else
 		{
-			int len = E.row[y].size;
+			int len = E.row[filerow].size;
 
 			if (len > E.screen_cols)
 				len = E.screen_cols;
 
-			ab_append(ab, E.row[y].text, len);
+			ab_append(ab, E.row[filerow].text, len);
 		}
 
     	// clear in line
@@ -297,6 +308,8 @@ void editor_draw_rows(struct abuf *ab)
 // formatting requires improvement here
 void editor_refresh_screen()
 {
+	editorScroll();
+
 	struct abuf ab = ABUF_INIT;
 
 	//hide the cursor while typing
@@ -335,7 +348,7 @@ void editor_navigate_cursor(char key)
 				E.cursor_y--;
 			break;
 		case ARROW_DOWN:
-			if(E.cursor_y < E.screen_rows - 1)
+			if(E.cursor_y < E.num_rows)
 				E.cursor_y++;
 			break;
 	}
@@ -372,6 +385,7 @@ void init_editor()
 	E.cursor_x = 0;
 	E.cursor_y = 0;
 	E.num_rows = 0;
+	E.row_offset = 0;
 	E.row = NULL;
 
 }
