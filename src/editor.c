@@ -36,6 +36,7 @@ struct editor_config
 	int screen_cols;
 	int num_rows;
 	int row_offset;
+	int col_offset;
 	e_row *row;
 	struct termios orig_termios;
 };
@@ -250,6 +251,13 @@ void editorScroll()
 
 	if (E.cursor_y >= E.row_offset + E.screen_rows) 
 		E.row_offset = E.cursor_y - E.screen_rows + 1;
+
+	if (E.cursor_x < E.col_offset) 
+		E.col_offset = E.cursor_x;
+
+	if (E.cursor_x >= E.col_offset + E.screen_cols) 
+		E.col_offset = E.cursor_x - E.screen_cols + 1;
+
 }
 
 // using append buffer to paint to prevent flickring while typing
@@ -289,12 +297,15 @@ void editor_draw_rows(struct abuf *ab)
 
 		else
 		{
-			int len = E.row[filerow].size;
+			int len = E.row[filerow].size - E.col_offset;
+
+			if(len < 0)
+				len = 0;
 
 			if (len > E.screen_cols)
 				len = E.screen_cols;
 
-			ab_append(ab, E.row[filerow].text, len);
+			ab_append(ab, &E.row[filerow].text[E.col_offset], len);
 		}
 
     	// clear in line
@@ -319,7 +330,9 @@ void editor_refresh_screen()
 	editor_draw_rows(&ab);
 
 	char cursor_buff[32];
-	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH", (E.cursor_y - E.row_offset) + 1, E.cursor_x + 1);
+	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH",  (E.cursor_y - E.row_offset) + 1, 
+														(E.cursor_x - E.col_offset) + 1);
+	
 	ab_append(&ab, cursor_buff, len);
 
 	ab_append(&ab, "\x1b[?25h", 6);
@@ -340,7 +353,7 @@ void editor_navigate_cursor(char key)
 				E.cursor_x--;
 			break;
 		case ARROW_RIGHT:
-			if(E.cursor_x < E.screen_cols - 1)
+		//	if(E.cursor_x < E.screen_cols - 1)
 				E.cursor_x++;
 			break;
 		case ARROW_UP:
@@ -386,6 +399,7 @@ void init_editor()
 	E.cursor_y = 0;
 	E.num_rows = 0;
 	E.row_offset = 0;
+	E.col_offset = 0;
 	E.row = NULL;
 
 }
