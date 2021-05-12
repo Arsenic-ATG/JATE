@@ -367,6 +367,12 @@ void editor_navigate_cursor(char key)
 				E.cursor_y++;
 			break;
 	}
+
+	// clip cursor at the end of lines
+	row = (E.cursor_y >= E.num_rows) ? NULL : &E.row[E.cursor_y];
+	int rowlen = row ? row->size : 0;
+	if(E.cursor_y > rowlen)
+		E.cursor_y = rowlen;
 }
 
 void editor_process_keypress()
