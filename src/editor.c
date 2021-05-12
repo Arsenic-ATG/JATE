@@ -319,7 +319,7 @@ void editor_refresh_screen()
 	editor_draw_rows(&ab);
 
 	char cursor_buff[32];
-	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH", E.cursor_y + 1, E.cursor_x + 1);
+	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH", (E.cursor_y - E.row_offset) + 1, E.cursor_x + 1);
 	ab_append(&ab, cursor_buff, len);
 
 	ab_append(&ab, "\x1b[?25h", 6);
