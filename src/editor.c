@@ -353,15 +353,30 @@ void editor_navigate_cursor(char key)
 		case ARROW_LEFT:
 			if(E.cursor_x != 0)
 				E.cursor_x--;
+			// left arrow at the end of line
+			else if (E.cursor_y > 0) 
+			{
+        		E.cursor_y--;
+        		E.cursor_x = E.row[E.cursor_y].size;
+		    }
 			break;
+
 		case ARROW_RIGHT:
 			if(row && E.cursor_x < row->size)
 				E.cursor_x++;
+			// right arrow on begining of line
+			else if (row && E.cursor_x == row->size) 
+			{
+        		E.cursor_y++;
+        		E.cursor_x = 0;
+		    }
 			break;
+
 		case ARROW_UP:
 			if(E.cursor_y != 0)
 				E.cursor_y--;
 			break;
+			
 		case ARROW_DOWN:
 			if(E.cursor_y < E.num_rows)
 				E.cursor_y++;
