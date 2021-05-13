@@ -13,6 +13,8 @@
 // attmpt to mirror what the ctrl key does in terminal using bit masking
 #define CTRL_KEY(k) ((k) & 0x1f)
 
+#define TAB_SIZE 4
+
 /***************** global variables **********************/
 
 enum key
@@ -27,6 +29,8 @@ typedef struct editor_row
 {
 	int size;
 	char *text;
+	int r_size;
+	char *renderer;
 }e_row;
 
 struct editor_config
@@ -173,6 +177,36 @@ int get_windows_size(int *rows, int *cols)
 
 /************************ row operations ********************/
 
+void editor_update_row(e_row *row)
+{
+	int tabs = 0;
+	// find tabs allocate required amount of memory dynamically
+	for (int j = 0; j < row->size; j++)
+    	if (row->text[j] == '\t') 
+    		tabs++;
+
+	free(row->renderer);
+	row->renderer = malloc(row->size + (tabs * (TAB_SIZE - 1)) + 1);
+
+	int idx = 0;
+	for (int j = 0; j < row->size; j++) 
+	{
+		if(row->text[j] == '\t')
+		{
+			row->renderer[idx++] = ' ';
+			while(idx % TAB_SIZE != 0)
+				row->renderer[idx++] = ' ';
+		}
+		else
+		{
+			row->renderer[idx++] = row->text[j];
+		}
+	}
+
+	row->renderer[idx] = '\0';
+	row->r_size = idx;
+}
+
 void editor_append_row(char *s, size_t len) 
 {
 	E.row = realloc(E.row, sizeof(e_row) * (E.num_rows + 1));
@@ -182,6 +216,11 @@ void editor_append_row(char *s, size_t len)
 	E.row[at].text = malloc(len + 1);
 	memcpy(E.row[at].text, s, len);
 	E.row[at].text[len] = '\0';
+
+	E.row[at].r_size = 0;
+	E.row[at].renderer = NULL;
+	editor_update_row(&E.row[at]);
+
 	E.num_rows++;
 }
 
@@ -297,7 +336,7 @@ void editor_draw_rows(struct abuf *ab)
 
 		else
 		{
-			int len = E.row[filerow].size - E.col_offset;
+			int len = E.row[filerow].r_size - E.col_offset;
 
 			if(len < 0)
 				len = 0;
@@ -305,7 +344,7 @@ void editor_draw_rows(struct abuf *ab)
 			if (len > E.screen_cols)
 				len = E.screen_cols;
 
-			ab_append(ab, &E.row[filerow].text[E.col_offset], len);
+			ab_append(ab, &E.row[filerow].renderer[E.col_offset], len);
 		}
 
     	// clear in line
