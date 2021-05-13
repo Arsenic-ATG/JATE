@@ -446,7 +446,7 @@ void editor_navigate_cursor(char key)
 	// clip cursor at the end of lines
 	row = (E.cursor_y >= E.num_rows) ? NULL : &E.row[E.cursor_y];
 	int rowlen = row ? row->size : 0;
-	if(E.cursor_y > rowlen)
+	if(E.cursor_x > rowlen)
 		E.cursor_y = rowlen;
 }
 
