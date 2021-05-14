@@ -43,6 +43,7 @@ struct editor_config
 	int row_offset;
 	int col_offset;
 	e_row *row;
+	char *filename;
 	struct termios orig_termios;
 };
 
@@ -245,6 +246,7 @@ void editor_append_row(char *s, size_t len)
 void editor_open(const char* file_name)
 {
 	FILE *fp = fopen(file_name, "r");
+	E.filename = strdup(file_name);
 
 	if (!fp) 
 		die("fopen");
@@ -379,7 +381,15 @@ void editor_draw_statusbar(struct abuf *ab)
 {
 	ab_append(ab, "\x1b[7m", 4);
 
-	for(int i = 0; i < E.screen_cols; i++) 
+	// draw file name in status bar
+	char status[80];
+	int len = snprintf(status, sizeof(status), "%.20s - %d lines", E.filename ? E.filename : "[untitled]", E.num_rows);
+	if (len > E.screen_cols) 
+		len = E.screen_cols;
+
+	ab_append(ab, status, len);
+
+	for(int i = len; i < E.screen_cols; i++) 
 	{
 		ab_append(ab, " ", 1);
 	}
@@ -400,7 +410,7 @@ void editor_refresh_screen()
 
 	editor_draw_rows(&ab);
 	editor_draw_statusbar(&ab);
-	
+
 	char cursor_buff[32];
 	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH",  (E.cursor_y - E.row_offset) + 1, 
 														(E.renderer_x - E.col_offset) + 1);
@@ -497,6 +507,7 @@ void init_editor()
 	E.row_offset = 0;
 	E.col_offset = 0;
 	E.row = NULL;
+	E.filename = NULL;
 	// leave space for status bar
 	E.screen_rows --;
 
