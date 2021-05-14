@@ -371,9 +371,20 @@ void editor_draw_rows(struct abuf *ab)
     	// clear in line
 		ab_append(ab, "\x1b[K", 3);
 
-	  	if (y < E.screen_rows - 1) 
-	    	ab_append(ab, "\r\n", 2);
+    	ab_append(ab, "\r\n", 2);
 	}
+}
+
+void editor_draw_statusbar(struct abuf *ab)
+{
+	ab_append(ab, "\x1b[7m", 4);
+
+	for(int i = 0; i < E.screen_cols; i++) 
+	{
+		ab_append(ab, " ", 1);
+	}
+
+	ab_append(ab, "\x1b[m", 3);
 }
 
 // formatting requires improvement here
@@ -388,7 +399,8 @@ void editor_refresh_screen()
 	ab_append(&ab, "\x1b[H", 3);
 
 	editor_draw_rows(&ab);
-
+	editor_draw_statusbar(&ab);
+	
 	char cursor_buff[32];
 	int len = snprintf(cursor_buff, 32, "\x1b[%d;%dH",  (E.cursor_y - E.row_offset) + 1, 
 														(E.renderer_x - E.col_offset) + 1);
@@ -485,6 +497,8 @@ void init_editor()
 	E.row_offset = 0;
 	E.col_offset = 0;
 	E.row = NULL;
+	// leave space for status bar
+	E.screen_rows --;
 
 }
 
