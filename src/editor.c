@@ -382,8 +382,11 @@ void editor_draw_statusbar(struct abuf *ab)
 	ab_append(ab, "\x1b[7m", 4);
 
 	// draw file name in status bar
-	char status[80];
+	char status[80],current_row_status[80];
 	int len = snprintf(status, sizeof(status), "%.20s - %d lines", E.filename ? E.filename : "[untitled]", E.num_rows);
+
+	int crs_len = snprintf(current_row_status, sizeof(current_row_status), "%d/%d", E.cursor_y + 1, E.num_rows);
+
 	if (len > E.screen_cols) 
 		len = E.screen_cols;
 
@@ -391,7 +394,13 @@ void editor_draw_statusbar(struct abuf *ab)
 
 	for(int i = len; i < E.screen_cols; i++) 
 	{
-		ab_append(ab, " ", 1);
+		if(E.screen_cols - i == crs_len)
+		{
+			ab_append(ab, current_row_status, crs_len);
+			break;
+		}
+		else
+			ab_append(ab, " ", 1);
 	}
 
 	ab_append(ab, "\x1b[m", 3);
