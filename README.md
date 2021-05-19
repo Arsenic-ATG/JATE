@@ -3,7 +3,7 @@ attempt to make a fully fundtional bare bones text editor in C ( withough any de
 
 insipred from [kilo text editor](https://github.com/antirez/kilo)
 
-## Status : ( 👷‍♂️ under construction )
+## Status : 👷‍♂️ under construction 
 - editor can view a file and supports navigation via arrow keys (editing is not suported till now)
 
 ## Platform supported 
