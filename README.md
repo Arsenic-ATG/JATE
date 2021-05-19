@@ -23,7 +23,7 @@ Linux, macOS, windows(with cygwin)
 ```bash
 $ cd text-editor
 $ make
-$ ./editor
+$ ./editor <optional: file name that you want to open>
 ```
 
 ## Thank You for visiting 
