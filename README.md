@@ -16,7 +16,7 @@ Linux, macOS, windows(with cygwin)
 
 - navigate to the repository  
 
-- run a `make` command on your terminal to compile source ( if you don't have cmake then you can also manually compile the source code (src/editor.c) with a standard C compiler )
+- run a `make` command on your terminal to compile source ( if you don't have gnu-make then you can also manually compile the source code (src/editor.c) with a standard C compiler )
 
 - run exectuatable with the name `editor` 
 
