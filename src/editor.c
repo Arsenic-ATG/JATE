@@ -4,10 +4,12 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <termios.h>
+#include <time.h>
 #include <assert.h>
 
 // Mask to imitate a CTRL key press on keyboard.
@@ -44,6 +46,8 @@ struct editor_config
 	int col_offset;
 	e_row *row;
 	char *filename;
+	char status_msg[80];
+	time_t status_msg_time;
 	struct termios orig_termios;
 };
 
@@ -378,7 +382,7 @@ void editor_draw_rows(struct abuf *ab)
 		}
 }
 
-void editor_draw_statusbar(struct abuf *ab)
+void editor_draw_status_bar(struct abuf *ab)
 {
 	ab_append(ab, "\x1b[7m", 4);
 
@@ -411,6 +415,18 @@ void editor_draw_statusbar(struct abuf *ab)
 		}
 
 	ab_append(ab, "\x1b[m", 3);
+	// Space for message bar.
+	ab_append(ab, "\r\n", 2);
+}
+
+void editor_draw_message_bar(struct abuf *ab) 
+{
+  ab_append(ab, "\x1b[K", 3);
+  int msglen = strlen(E.status_msg);
+  if (msglen > E.screen_cols)
+  	msglen = E.screen_cols;
+  if (msglen && time(NULL) - E.status_msg_time < 5)
+    ab_append(ab, E.status_msg, msglen);
 }
 
 // TODO: formatting requires improvement here
@@ -425,7 +441,8 @@ void editor_refresh_screen()
 	ab_append(&ab, "\x1b[H", 3);
 
 	editor_draw_rows(&ab);
-	editor_draw_statusbar(&ab);
+	editor_draw_status_bar(&ab);
+	editor_draw_message_bar(&ab);
 
 	char cursor_buff[32];
 	int len 
@@ -439,6 +456,15 @@ void editor_refresh_screen()
 
 	write(STDOUT_FILENO,ab.b,ab.len);
 	ab_free(&ab);
+}
+
+/* Set the status message that would be displyed in the message bar.  */
+void editor_set_status_message(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(E.status_msg, sizeof(E.status_msg), fmt, ap);
+  va_end(ap);
+  E.status_msg_time = time(NULL);
 }
 
 /************************ input ***********************/
@@ -526,9 +552,10 @@ void init_editor()
 	E.col_offset = 0;
 	E.row = NULL;
 	E.filename = NULL;
-	// Leave space for status bar
-	E.screen_rows --;
-
+	E.status_msg[0] = '\0';
+	E.status_msg_time = 0;
+	// Leave space for status bar.
+	E.screen_rows -= 2;
 }
 
 /************************** main() function *************************/
@@ -539,11 +566,13 @@ int main(int argc, char *argv[])
 	if (argc >= 2)
 		editor_open(argv[1]);
 
-		while (1)
-			{
-				editor_refresh_screen();
-				editor_process_keypress();
-			}
+  editor_set_status_message ("HELP: Ctrl-Q = quit");
+
+	while (1)
+		{
+			editor_refresh_screen();
+			editor_process_keypress();
+		}
 
 	return 0;
 }
