@@ -244,6 +244,17 @@ void editor_append_row(char *s, size_t len)
 	E.num_rows++;
 }
 
+void editor_row_insert_char(e_row *row, int at, int c)
+{
+	if (at < 0 || at > row->size)
+		at = row->size;
+	row->text = realloc(row->text, row->size + 2);
+	memmove(&row->text[at + 1], &row->text[at], row->size - at + 1);
+	row->size++;
+	row->text[at] = c;
+	editor_update_row(row);
+}
+
 /************************ file i/o ********************/
 
 void editor_open(const char* file_name)
