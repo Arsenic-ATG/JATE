@@ -255,6 +255,18 @@ void editor_row_insert_char(e_row *row, int at, int c)
 	editor_update_row(row);
 }
 
+/************************ Editor operations ********************/
+
+void editor_insert_char(char c)
+{
+	// The the cursor is at the end of line
+	if(E.cursor_y == E.num_rows)
+		editor_append_row("",0);
+
+	editor_row_insert_char(&E.row[E.cursor_y], E.cursor_x, c);
+	E.cursor_x++;
+}
+
 /************************ file i/o ********************/
 
 void editor_open(const char* file_name)
@@ -546,6 +558,9 @@ void editor_process_keypress()
 				editor_navigate_cursor(c);
 				break;
 
+			default:
+				// Ordinary key was pressed.
+				editor_insert_char(c);
 		}
 }
 
