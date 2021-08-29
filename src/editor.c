@@ -11,6 +11,8 @@
 #include <termios.h>
 #include <time.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <stdbool.h>
 
 // Mask to imitate a CTRL key press on keyboard.
 #define CTRL_KEY(k) ((k) & 0x1f)
@@ -63,6 +65,10 @@ void die(const char *s)
 	perror(s);
 	exit(1);
 }
+/***************** function Prototypes ******************/
+
+// TODO: possibly seperate them out in different headers.
+void editor_set_status_message (const char *fmt, ...);
 
 /***************** terminal *****************************/
 void disable_raw_mode ()
@@ -297,6 +303,58 @@ void editor_open(const char* file_name)
 	fclose(fp);
 }
 
+// LEAK WARNING: the NEW_BUFFER is expected to free by caller
+char *editor_rows_to_string(int *buffer_length)
+{
+  int total_length = 0;
+  for (int i = 0; i < E.num_rows; i++)
+    total_length += E.row[i].size + 1;
+  *buffer_length = total_length;
+
+  char *new_buffer = malloc(total_length);
+  char *p = new_buffer;
+
+  for (int i = 0; i < E.num_rows; i++) 
+  {
+    memcpy(p, E.row[i].text, E.row[i].size);
+    p += E.row[i].size;
+    *p = '\n';
+    p++;
+  }
+
+  return new_buffer;
+}
+
+bool editor_save()
+{
+	// TODO: Handle the case where the file is not provided in the begining.
+	if (E.filename == NULL)
+		return false;
+
+	int length;
+	char *buffer = editor_rows_to_string(&length);
+	int file_descriptor = open(E.filename, O_RDWR | O_CREAT, 0644);
+
+	// TODO: perform some error handling where saving fails.
+	if (file_descriptor != -1)
+		{
+			if (ftruncate(file_descriptor, length) != -1)
+				{
+				  if (write(file_descriptor, buffer, length) == length)
+					  {
+					  	free(buffer);
+					  	close(file_descriptor);
+					  	return true;
+					  }
+				}
+			close(file_descriptor);
+		}
+
+  // Cleanup
+  free(buffer);
+  return false;
+}
+
 /************************ append buffer ********************/
 
 struct abuf 
@@ -381,7 +439,7 @@ void editor_draw_rows(struct abuf *ab)
 						}
 					else
 						{
-							// start of new line
+							// start of new line ( Should this be replaced with line number ?)
 							ab_append(ab, ">", 1);
 						}
 				}
@@ -452,7 +510,6 @@ void editor_draw_message_bar(struct abuf *ab)
     ab_append(ab, E.status_msg, msglen);
 }
 
-// TODO: formatting requires improvement here
 void editor_refresh_screen()
 {
 	editorScroll();
@@ -545,10 +602,22 @@ void editor_process_keypress()
 
 	switch(c)
 		{
+			// "ctrl + q" to quit
 			case CTRL_KEY('q'): 
 				write(STDOUT_FILENO, "\x1b[2J", 4);
 				write(STDOUT_FILENO, "\x1b[H", 3);
 				exit(0);
+				break;
+
+			// "ctrl + s" to save the buffer to disk
+			case CTRL_KEY('s'):
+				bool save_sucess = editor_save();
+
+				if (save_sucess)
+					editor_set_status_message("save succesfull !");
+				// TODO: Give out more info about what went wrong while saving.
+				else
+					editor_set_status_message("Can't save !");
 				break;
 
 			case ARROW_LEFT:
@@ -558,8 +627,14 @@ void editor_process_keypress()
 				editor_navigate_cursor(c);
 				break;
 
+			case '\r':
+				break;
+
+			// TODO: Handle character deletion keys.
+			// TODO: Handle more key combinations.
+
 			default:
-				// Ordinary key was pressed.
+				// Ordinary key was pressed, in such case, render the character as it is.
 				editor_insert_char(c);
 		}
 }
@@ -592,7 +667,7 @@ int main(int argc, char *argv[])
 	if (argc >= 2)
 		editor_open(argv[1]);
 
-  editor_set_status_message ("HELP: Ctrl-Q = quit");
+  editor_set_status_message ("HELP: Ctrl-S = save | Ctrl-Q = quit");
 
 	while (1)
 		{
