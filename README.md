@@ -5,7 +5,8 @@ attempt to make a fully functional bare bones text editor in C ( without any dep
 insipred from [kilo text editor](https://github.com/antirez/kilo)
 
 ## Status : 👷‍♂️ under construction 
-- editor can view a file and supports navigation via arrow keys (editing is not supported till now)
+- The Editor can view a file and supports navigation via arrow keys
+- Update: Basic editing support is added after commit 7db5c29806f05d846d8a818e69e7bbdc4775df49
 
 ## Platform supported 
 Linux, macOS, windows(with cygwin)
