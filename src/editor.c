@@ -598,12 +598,30 @@ void editor_navigate_cursor(char key)
 
 void editor_process_keypress()
 {
+	bool is_saved = false;
 	char c = editor_read_key();
 
 	switch(c)
 		{
 			// "ctrl + q" to quit
-			case CTRL_KEY('q'): 
+			case CTRL_KEY('q'):
+				if(!is_saved)
+					{
+						// If changes are not saved, ask for confimation
+						editor_set_status_message("File contains unsaved changes, Press CTRL-Q again to exit");
+						editor_refresh_screen();
+						char confirmation = editor_read_key();
+						if( confirmation == CTRL_KEY('q'))
+							{
+								write(STDOUT_FILENO, "\x1b[2J", 4);
+								write(STDOUT_FILENO, "\x1b[H", 3);
+								exit(0);
+							}
+						else
+							{
+								break;
+							}
+					}
 				write(STDOUT_FILENO, "\x1b[2J", 4);
 				write(STDOUT_FILENO, "\x1b[H", 3);
 				exit(0);
@@ -614,7 +632,10 @@ void editor_process_keypress()
 				bool save_sucess = editor_save();
 
 				if (save_sucess)
+				{
 					editor_set_status_message("save succesfull !");
+					is_saved = true;
+				}
 				// TODO: Give out more info about what went wrong while saving.
 				else
 					editor_set_status_message("Can't save !");
@@ -636,6 +657,7 @@ void editor_process_keypress()
 			default:
 				// Ordinary key was pressed, in such case, render the character as it is.
 				editor_insert_char(c);
+				is_saved = false;
 		}
 }
 
