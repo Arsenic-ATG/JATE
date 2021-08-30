@@ -47,6 +47,7 @@ struct editor_config
 	int row_offset;
 	int col_offset;
 	e_row *row;
+	bool modified;
 	char *filename;
 	char status_msg[80];
 	time_t status_msg_time;
@@ -248,6 +249,7 @@ void editor_append_row(char *s, size_t len)
 	editor_update_row(&E.row[at]);
 
 	E.num_rows++;
+	E.modified = 1;
 }
 
 void editor_row_insert_char(e_row *row, int at, int c)
@@ -259,6 +261,7 @@ void editor_row_insert_char(e_row *row, int at, int c)
 	row->size++;
 	row->text[at] = c;
 	editor_update_row(row);
+	E.modified = 1;
 }
 
 /************************ Editor operations ********************/
@@ -301,6 +304,7 @@ void editor_open(const char* file_name)
 
 	free(line);
 	fclose(fp);
+	E.modified = 0;
 }
 
 // LEAK WARNING: the NEW_BUFFER is expected to free by caller
@@ -472,7 +476,8 @@ void editor_draw_status_bar(struct abuf *ab)
 	int len
 		= snprintf(status, sizeof(status), "%.20s - %d lines",
 		           E.filename ? E.filename : "[untitled]",
-		           E.num_rows);
+		           E.num_rows,
+		           E.modified ? "(modified)" : "");
 
 	int crs_len
 		= snprintf(current_row_status, sizeof(current_row_status), "%d/%d",
@@ -598,30 +603,12 @@ void editor_navigate_cursor(char key)
 
 void editor_process_keypress()
 {
-	bool is_saved = false;
 	char c = editor_read_key();
 
 	switch(c)
 		{
 			// "ctrl + q" to quit
 			case CTRL_KEY('q'):
-				if(!is_saved)
-					{
-						// If changes are not saved, ask for confimation
-						editor_set_status_message("File contains unsaved changes, Press CTRL-Q again to exit");
-						editor_refresh_screen();
-						char confirmation = editor_read_key();
-						if( confirmation == CTRL_KEY('q'))
-							{
-								write(STDOUT_FILENO, "\x1b[2J", 4);
-								write(STDOUT_FILENO, "\x1b[H", 3);
-								exit(0);
-							}
-						else
-							{
-								break;
-							}
-					}
 				write(STDOUT_FILENO, "\x1b[2J", 4);
 				write(STDOUT_FILENO, "\x1b[H", 3);
 				exit(0);
@@ -634,7 +621,7 @@ void editor_process_keypress()
 				if (save_sucess)
 				{
 					editor_set_status_message("save succesfull !");
-					is_saved = true;
+					E.modified = 0;
 				}
 				// TODO: Give out more info about what went wrong while saving.
 				else
@@ -677,6 +664,7 @@ void init_editor()
 	E.filename = NULL;
 	E.status_msg[0] = '\0';
 	E.status_msg_time = 0;
+	E.modified = 0;
 	// Leave space for status bar.
 	E.screen_rows -= 2;
 }
