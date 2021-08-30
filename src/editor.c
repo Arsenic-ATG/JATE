@@ -474,7 +474,7 @@ void editor_draw_status_bar(struct abuf *ab)
 	// Draw file name in status bar.
 	char status[80],current_row_status[80];
 	int len
-		= snprintf(status, sizeof(status), "%.20s - %d lines",
+		= snprintf(status, sizeof(status), "%.20s - %d lines, %s",
 		           E.filename ? E.filename : "[untitled]",
 		           E.num_rows,
 		           E.modified ? "(modified)" : "");
@@ -603,12 +603,20 @@ void editor_navigate_cursor(char key)
 
 void editor_process_keypress()
 {
+	static int quit_attempts = 0;
 	char c = editor_read_key();
 
 	switch(c)
 		{
 			// "ctrl + q" to quit
 			case CTRL_KEY('q'):
+				if(E.modified && quit_attempts < 1)
+				{
+					editor_set_status_message("File contains unsaved changes,"
+					                          "Press CTRL-Q again to confirm quit.");
+					quit_attempts++;
+					break;
+				}
 				write(STDOUT_FILENO, "\x1b[2J", 4);
 				write(STDOUT_FILENO, "\x1b[H", 3);
 				exit(0);
@@ -644,7 +652,6 @@ void editor_process_keypress()
 			default:
 				// Ordinary key was pressed, in such case, render the character as it is.
 				editor_insert_char(c);
-				is_saved = false;
 		}
 }
 
