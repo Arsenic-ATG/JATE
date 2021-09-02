@@ -23,10 +23,17 @@
 
 enum key
 {
-	ARROW_UP = -1,
+	BACKSPACE = 127,
+	ARROW_UP = 1000,
 	ARROW_DOWN ,
 	ARROW_LEFT ,
-	ARROW_RIGHT
+	ARROW_RIGHT ,
+	// Bellow keys are yet to be implemented
+	DEL_KEY,
+  HOME_KEY,
+  END_KEY,
+  PAGE_UP,
+  PAGE_DOWN,
 };
 
 typedef struct editor_row 
@@ -102,7 +109,7 @@ void enable_raw_mode ()
 		die("tcgetattr");
 }
 
-char editor_read_key()
+int editor_read_key()
 {
 		char c;
 		int charaters_read = read(STDIN_FILENO, &c, 1);
@@ -264,6 +271,16 @@ void editor_row_insert_char(e_row *row, int at, int c)
 	E.modified = 1;
 }
 
+void editor_row_delete_char(e_row *row, int at)
+{
+	if (at < 0 || at >= row->size)
+		return;
+	memmove(&row->text[at], &row->text[at + 1], row->size - at + 1);
+	row->size--;
+	editor_update_row(row);
+	E.modified = 1;
+}
+
 /************************ Editor operations ********************/
 
 void editor_insert_char(char c)
@@ -274,6 +291,16 @@ void editor_insert_char(char c)
 
 	editor_row_insert_char(&E.row[E.cursor_y], E.cursor_x, c);
 	E.cursor_x++;
+}
+
+void editor_delete_char()
+{
+	// The the cursor is at the beging of line
+	if(E.cursor_y == E.num_rows)
+		return;
+
+	editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x - 1);
+	E.cursor_x--;
 }
 
 /************************ file i/o ********************/
@@ -554,7 +581,7 @@ void editor_set_status_message(const char *fmt, ...) {
 
 /************************ input ***********************/
 
-void editor_navigate_cursor(char key) 
+void editor_navigate_cursor(int key) 
 {
 	e_row *row = (E.cursor_y >= E.num_rows) ? NULL : &E.row[E.cursor_y];
 
@@ -604,7 +631,7 @@ void editor_navigate_cursor(char key)
 void editor_process_keypress()
 {
 	static int quit_attempts = 0;
-	char c = editor_read_key();
+	int c = editor_read_key();
 
 	switch(c)
 		{
@@ -636,6 +663,7 @@ void editor_process_keypress()
 					editor_set_status_message("Can't save !");
 				break;
 
+			// Navigation keys
 			case ARROW_LEFT:
 			case ARROW_RIGHT:
 			case ARROW_DOWN:
@@ -646,7 +674,12 @@ void editor_process_keypress()
 			case '\r':
 				break;
 
-			// TODO: Handle character deletion keys.
+			// Deletion keys
+			case BACKSPACE:
+			case CTRL_KEY('h'):
+	    	editor_delete_char();
+	    	break;
+
 			// TODO: Handle more key combinations.
 
 			default:
