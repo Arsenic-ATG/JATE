@@ -299,8 +299,11 @@ void editor_delete_char()
   if(E.cursor_y == E.num_rows)
     return;
 
-  editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x - 1);
-  E.cursor_x--;
+  if(E.cursor_x > 0)
+    {
+      editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x - 1);
+      E.cursor_x--;
+    }
 }
 
 /************************ file i/o ********************/
