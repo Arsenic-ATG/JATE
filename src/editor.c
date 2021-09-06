@@ -281,11 +281,34 @@ void editor_row_delete_char(e_row *row, int at)
   E.modified = 1;
 }
 
+void editor_row_append_string(e_row *row, char *str, size_t length)
+{
+  row->text = realloc(row->text, row->size + length + 1);
+  memcpy(&row->text[row->size], str, length);
+  row->size += length;
+  row->text[row->size] = '\0';
+  editor_update_row(row);
+  E.modified = 1;
+}
+
+void editor_delete_row(int at)
+{
+  if (at < 0 || at >= E.num_rows)
+    return;
+  
+  // free row
+  free(E.row->text);
+  free(E.row->renderer);
+  memmove(&E.row[at], &E.row[at + 1], sizeof(e_row) * (E.num_rows - at - 1));
+  E.num_rows--;
+  E.modified = 1;
+}
+
 /************************ Editor operations ********************/
 
 void editor_insert_char(char c)
 {
-  // The the cursor is at the end of line
+  // The the cursor is at the end of file
   if(E.cursor_y == E.num_rows)
     editor_append_row("",0);
 
@@ -295,14 +318,25 @@ void editor_insert_char(char c)
 
 void editor_delete_char()
 {
-  // The the cursor is at the beging of line
   if(E.cursor_y == E.num_rows)
+    return;
+
+  if(E.cursor_y == 0 && E.cursor_x == 0)
     return;
 
   if(E.cursor_x > 0)
     {
       editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x - 1);
       E.cursor_x--;
+    }
+  else
+    {
+      E.cursor_x = E.row[E.cursor_y - 1].size;
+      editor_row_append_string(&E.row[E.cursor_y - 1],
+                               E.row[E.cursor_y].text,
+                               E.row[E.cursor_y].size);
+      editor_delete_row(E.cursor_y);
+      E.cursor_y--;
     }
 }
 
