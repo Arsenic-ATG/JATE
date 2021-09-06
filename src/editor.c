@@ -295,10 +295,9 @@ void editor_delete_row(int at)
 {
   if (at < 0 || at >= E.num_rows)
     return;
-  
   // free row
-  free(E.row->text);
-  free(E.row->renderer);
+  free(E.row[at].renderer);
+  free(E.row[at].text);
   memmove(&E.row[at], &E.row[at + 1], sizeof(e_row) * (E.num_rows - at - 1));
   E.num_rows--;
   E.modified = 1;
