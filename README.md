@@ -4,9 +4,24 @@ attempt to make a fully functional bare bones text editor in C ( without any dep
 
 insipred from [kilo text editor](https://github.com/antirez/kilo)
 
-## Status : 👷‍♂️ under construction 
-- The Editor can view a file and supports navigation via arrow keys
-- Update: Basic editing support is added after commit 7db5c29806f05d846d8a818e69e7bbdc4775df49
+## Status : Alpha Version
+
+The editor can now :
+- [x] View already existing file on the system. 
+- [x] Edit a text file
+- [x] Check if the file is in modified state or not ( and warn if you try to exit a modified file without saving )
+- [x] Save chagnes to the open file ( using `Ctrl-s` )
+- [x] Quit (using `Ctrl-q` )
+
+---
+
+But still it can't :
+- [ ] Create a new file
+- [ ] Save a blank file ( Save-as feature )
+- [ ] support text highlithing for C/C++
+
+| **⚠️ WARNING:** The software is still in alpha version so if you planning to use it, I suggest making regular backups of your work (using a version control) in case you run into bugs in the editor.|
+| --- |
 
 ## Platform supported 
 Linux, macOS, windows(with cygwin)
