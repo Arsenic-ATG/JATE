@@ -1,10 +1,10 @@
-# Text-Editor
-attempt to make a fully functional bare bones text editor in C ( without any dependencies by directly
+# J.A.T.E.
+_**J**ust **A**nother **T**erminal-based **E**ditor (JATE)_ is an attempt to make a fully functional bare bones text editor in C ( without any dependencies by directly
  manipulating terminal via [VT100](https://vt100.net) escape sequences ) 
 
-insipred from [kilo text editor](https://github.com/antirez/kilo)
+Insipred from [kilo text editor](https://github.com/antirez/kilo)
 
-## Status : Alpha Version
+## Status : Beta Version
 
 The editor can now :
 - [x] View already existing file on the system. 
@@ -20,7 +20,7 @@ But still it can't :
 - [ ] Save a blank file ( Save-as feature )
 - [ ] support text highlithing for C/C++
 
-| **⚠️ WARNING:** The software is still in alpha version so if you planning to use it, I suggest making regular backups of your work (using a version control) in case you run into bugs in the editor.|
+| **⚠️ WARNING:** The software is still in Beta version so if you planning to use it, I suggest making regular backups of your work in case you run into bugs in the editor.|
 | --- |
 
 ## Platform supported 
