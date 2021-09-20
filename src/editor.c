@@ -717,6 +717,7 @@ void editor_process_keypress()
 
       // "ctrl + s" to save the buffer to disk
       case CTRL_KEY('s'):
+      {
         bool save_sucess = editor_save();
 
         if (save_sucess)
@@ -728,7 +729,8 @@ void editor_process_keypress()
         else
           editor_set_status_message("Can't save !");
         break;
-
+      }
+      
       // Navigation keys
       case ARROW_LEFT:
       case ARROW_RIGHT:
