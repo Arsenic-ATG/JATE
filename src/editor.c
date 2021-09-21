@@ -1,3 +1,15 @@
+/****************** macros *************************/
+
+// feature test macros
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+#define _GNU_SOURCE
+
+// Mask to imitate a CTRL key press on keyboard.
+#define CTRL_KEY(k) ((k) & 0x1f)
+
+#define TAB_SIZE 4
+
 /****************** headers *************************/
 #include <stdio.h>
 #include <ctype.h>
@@ -13,11 +25,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdbool.h>
-
-// Mask to imitate a CTRL key press on keyboard.
-#define CTRL_KEY(k) ((k) & 0x1f)
-
-#define TAB_SIZE 4
 
 /***************** global variables **********************/
 
