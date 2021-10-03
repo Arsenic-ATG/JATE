@@ -1,91 +1,11 @@
-/****************** macros *************************/
+#ifndef FUNC_SOURCE
+#define FUNC_SOURCE
 
-// feature test macros
-#define _DEFAULT_SOURCE
-#define _BSD_SOURCE
-#define _GNU_SOURCE
+#include "headers/includes.h"
+#include "headers/macros.h"
+#include "headers/global_var.h"
+#include "headers/func_prototype.h"
 
-// Mask to imitate a CTRL key press on keyboard.
-#define CTRL_KEY(k) ((k) & 0x1f)
-
-#define TAB_SIZE 4
-
-/****************** headers *************************/
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <termios.h>
-#include <time.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <stdbool.h>
-
-/***************** global variables **********************/
-
-enum key
-{
-  BACKSPACE = 127,
-  ARROW_UP = 1000,
-  ARROW_DOWN ,
-  ARROW_LEFT ,
-  ARROW_RIGHT ,
-  // Bellow keys are yet to be implemented
-  DEL_KEY,
-  HOME_KEY,
-  END_KEY,
-  PAGE_UP,
-  PAGE_DOWN,
-};
-
-typedef struct editor_row 
-{
-  int size;
-  char *text;
-  int r_size;
-  char *renderer;
-}e_row;
-
-struct editor_config
-{
-  int cursor_x,cursor_y;
-  int renderer_x;
-  int screen_rows;
-  int screen_cols;
-  int num_rows;
-  int row_offset;
-  int col_offset;
-  e_row *row;
-  bool modified;
-  char *filename;
-  char status_msg[80];
-  time_t status_msg_time;
-  struct termios orig_termios;
-};
-
-struct editor_config E;
-
-/***************** error handling ************************/
-
-void die(const char *s)
-{
-  write(STDOUT_FILENO, "\x1b[2J", 4);
-  write(STDOUT_FILENO, "\x1b[H", 3);
-
-  perror(s);
-  exit(1);
-}
-/***************** function Prototypes ******************/
-
-// TODO: possibly seperate them out in different headers.
-void editor_set_status_message (const char *fmt, ...);
-
-/***************** terminal *****************************/
 void disable_raw_mode ()
 {
   if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)
@@ -461,15 +381,6 @@ bool editor_save()
 
 /************************ append buffer ********************/
 
-struct abuf 
-{
-  char *b;
-  int len;
-};
-
-// constructor
-#define ABUF_INIT {NULL, 0}
-
 void ab_append(struct abuf *ab,const char *str,int len)
 {
   char *new = realloc(ab->b, ab->len + len);
@@ -786,21 +697,4 @@ void init_editor()
   E.screen_rows -= 2;
 }
 
-/************************** main() function *************************/
-int main(int argc, char *argv[])
-{
-  enable_raw_mode();
-  init_editor();
-  if (argc >= 2)
-    editor_open(argv[1]);
-
-  editor_set_status_message ("HELP: Ctrl-S = save | Ctrl-Q = quit");
-
-  while (1)
-    {
-      editor_refresh_screen();
-      editor_process_keypress();
-    }
-
-  return 0;
-}
+#endif
