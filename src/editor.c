@@ -35,7 +35,6 @@ enum key
   ARROW_DOWN ,
   ARROW_LEFT ,
   ARROW_RIGHT ,
-  // Bellow keys are yet to be implemented
   DEL_KEY,
   HOME_KEY,
   END_KEY,
@@ -138,16 +137,51 @@ int editor_read_key()
         if (read(STDIN_FILENO, &seq[1], 1) != 1) 
           return '\x1b';
 
-        if (seq[0] == '[') 
+        if (seq[0] == '[')
           {
-            switch (seq[1]) 
+            if (seq[1] >= '0' && seq[1] <= '9')
               {
-                case 'A': return ARROW_UP;
-                case 'B': return ARROW_DOWN;
-                case 'C': return ARROW_RIGHT;
-                case 'D': return ARROW_LEFT;
+
+                if (read(STDIN_FILENO, &seq[2], 1) != 1)
+                  return '\x1b';
+
+                if (seq[2] == '~')
+                  {
+                    switch (seq[1])
+                      {
+                        case '1': return HOME_KEY;
+                        case '3': return DEL_KEY;
+                        case '4': return END_KEY;
+                        case '5': return PAGE_UP;
+                        case '6': return PAGE_DOWN;
+                        case '7': return HOME_KEY;
+                        case '8': return END_KEY;
+                      }
+                  }
+              }
+
+            else
+              {
+                switch (seq[1])
+                  {
+                    case 'A': return ARROW_UP;
+                    case 'B': return ARROW_DOWN;
+                    case 'C': return ARROW_RIGHT;
+                    case 'D': return ARROW_LEFT;
+                    case 'H': return HOME_KEY;
+                    case 'F': return END_KEY;
+                  }
               }
           }
+        else if (seq[0] == 'O')
+          {
+            switch (seq[1])
+              {
+                case 'H': return HOME_KEY;
+                case 'F': return END_KEY;
+              }
+          }
+
         return '\x1b';
       }
 
