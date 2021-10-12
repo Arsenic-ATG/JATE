@@ -42,7 +42,7 @@ enum key
   PAGE_DOWN,
 };
 
-typedef struct editor_row 
+typedef struct editor_row
 {
   int size;
   char *text;
@@ -93,7 +93,7 @@ void disable_raw_mode ()
 
 void enable_raw_mode ()
 {
-  if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) 
+  if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1)
     die("tcgetattr");
 
   atexit(disable_raw_mode);
@@ -108,10 +108,10 @@ void enable_raw_mode ()
   raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
 
   // To set up timeout for input.
-  raw.c_cc[VMIN] = 0;   
+  raw.c_cc[VMIN] = 0;
   raw.c_cc[VTIME] = 1;
 
-  if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) 
+  if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1)
     die("tcgetattr");
 }
 
@@ -123,18 +123,18 @@ int editor_read_key()
     while(charaters_read != 1)
       {
         charaters_read = read(STDIN_FILENO, &c, 1);
-        if( charaters_read == -1) 
+        if( charaters_read == -1)
           die("read");
       }
 
     // read escape sequence
-    if (c == '\x1b') 
+    if (c == '\x1b')
       {
         char seq[3];
-        if (read(STDIN_FILENO, &seq[0], 1) != 1) 
+        if (read(STDIN_FILENO, &seq[0], 1) != 1)
           return '\x1b';
 
-        if (read(STDIN_FILENO, &seq[1], 1) != 1) 
+        if (read(STDIN_FILENO, &seq[1], 1) != 1)
           return '\x1b';
 
         if (seq[0] == '[')
@@ -199,9 +199,9 @@ int get_cursor_position(int *rows,int *cols)
 
   while(i < sizeof(buf) - 1)
     {
-      if (read(STDIN_FILENO,&buf[i],1) != 1) 
+      if (read(STDIN_FILENO,&buf[i],1) != 1)
         break;
-      else if (buf[i] == 'R') 
+      else if (buf[i] == 'R')
         break;
       i++;
     }
@@ -209,9 +209,9 @@ int get_cursor_position(int *rows,int *cols)
 
   if (buf[0] != '\x1b' || buf[1] != '[')
     return -1;
-  if (sscanf(&buf[2], "%d;%d", rows, cols) != 2) 
+  if (sscanf(&buf[2], "%d;%d", rows, cols) != 2)
     return -1;
-   
+
   return 0;
 }
 
@@ -221,9 +221,9 @@ int get_windows_size(int *rows, int *cols)
 
   if(ioctl(STDOUT_FILENO , TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
     {
-      if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) 
+      if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12)
         return -1;
-        
+
       return get_cursor_position(rows,cols);
     }
   else
@@ -241,7 +241,7 @@ int editor_convert_cx_to_rx(e_row *row,const int cx)
 {
   int rx = 0;
 
-  for (int j = 0; j < cx; j++) 
+  for (int j = 0; j < cx; j++)
     {
       if (row->text[j] == '\t')
         rx += (TAB_SIZE - 1) - (rx % TAB_SIZE);
@@ -257,14 +257,14 @@ void editor_update_row(e_row *row)
   int tabs = 0;
   // Find tabs and allocate required amount of memory dynamically.
   for (int j = 0; j < row->size; j++)
-    if (row->text[j] == '\t') 
+    if (row->text[j] == '\t')
       tabs++;
 
   free(row->renderer);
   row->renderer = malloc(row->size + (tabs * (TAB_SIZE - 1)) + 1);
 
   int idx = 0;
-  for (int j = 0; j < row->size; j++) 
+  for (int j = 0; j < row->size; j++)
     {
       if(row->text[j] == '\t')
         {
@@ -303,7 +303,7 @@ void editor_insert_row(int at, char *s, size_t len)
   E.modified = 1;
 }
 
-void editor_append_row(char *s, size_t len) 
+void editor_append_row(char *s, size_t len)
 {
   int at = E.num_rows;
   editor_insert_row(at, s, len);
@@ -417,7 +417,7 @@ void editor_open(const char* file_name)
   FILE *fp = fopen(file_name, "r");
   E.filename = strdup(file_name);
 
-  if (!fp) 
+  if (!fp)
     die("fopen");
 
   char *line = NULL;
@@ -452,7 +452,7 @@ char *editor_rows_to_string(int *buffer_length)
   char *new_buffer = malloc(total_length);
   char *p = new_buffer;
 
-  for (int i = 0; i < E.num_rows; i++) 
+  for (int i = 0; i < E.num_rows; i++)
   {
     memcpy(p, E.row[i].text, E.row[i].size);
     p += E.row[i].size;
@@ -495,7 +495,7 @@ bool editor_save()
 
 /************************ append buffer ********************/
 
-struct abuf 
+struct abuf
 {
   char *b;
   int len;
@@ -508,7 +508,7 @@ void ab_append(struct abuf *ab,const char *str,int len)
 {
   char *new = realloc(ab->b, ab->len + len);
 
-  if (new == NULL) 
+  if (new == NULL)
     return;
 
   memcpy(&new[ab->len], str, len);
@@ -524,23 +524,23 @@ void ab_free(struct abuf *ab)
 
 /************************* output ****************************/
 
-void editorScroll() 
+void editorScroll()
 {
   E.renderer_x = 0;
 
   if (E.cursor_y < E.num_rows)
     E.renderer_x = editor_convert_cx_to_rx(&E.row[E.cursor_y], E.cursor_x);
 
-  if (E.cursor_y < E.row_offset) 
+  if (E.cursor_y < E.row_offset)
     E.row_offset = E.cursor_y;
 
-  if (E.cursor_y >= E.row_offset + E.screen_rows) 
+  if (E.cursor_y >= E.row_offset + E.screen_rows)
     E.row_offset = E.cursor_y - E.screen_rows + 1;
 
-  if (E.renderer_x < E.col_offset) 
+  if (E.renderer_x < E.col_offset)
     E.col_offset = E.renderer_x;
 
-  if (E.renderer_x >= E.col_offset + E.screen_cols) 
+  if (E.renderer_x >= E.col_offset + E.screen_cols)
     E.col_offset = E.renderer_x - E.screen_cols + 1;
 
 }
@@ -549,7 +549,7 @@ void editorScroll()
 void editor_draw_rows(struct abuf *ab)
 {
   int y;
-  for (y = 0; y < E.screen_rows; y++) 
+  for (y = 0; y < E.screen_rows; y++)
     {
       int filerow = y + E.row_offset;
       if(filerow >= E.num_rows)
@@ -618,12 +618,12 @@ void editor_draw_status_bar(struct abuf *ab)
                E.cursor_y + 1,
                E.num_rows);
 
-  if (len > E.screen_cols) 
+  if (len > E.screen_cols)
     len = E.screen_cols;
 
   ab_append(ab, status, len);
 
-  for(int i = len; i < E.screen_cols; i++) 
+  for(int i = len; i < E.screen_cols; i++)
     {
       if(E.screen_cols - i == crs_len)
         {
@@ -639,7 +639,7 @@ void editor_draw_status_bar(struct abuf *ab)
   ab_append(ab, "\r\n", 2);
 }
 
-void editor_draw_message_bar(struct abuf *ab) 
+void editor_draw_message_bar(struct abuf *ab)
 {
   ab_append(ab, "\x1b[K", 3);
   int msglen = strlen(E.status_msg);
@@ -664,7 +664,7 @@ void editor_refresh_screen()
   editor_draw_message_bar(&ab);
 
   char cursor_buff[32];
-  int len 
+  int len
     = snprintf(cursor_buff, 32, "\x1b[%d;%dH",
                (E.cursor_y - E.row_offset) + 1,
                (E.renderer_x - E.col_offset) + 1);
@@ -688,18 +688,18 @@ void editor_set_status_message(const char *fmt, ...) {
 
 /************************ input ***********************/
 
-void editor_navigate_cursor(int key) 
+void editor_navigate_cursor(int key)
 {
   e_row *row = (E.cursor_y >= E.num_rows) ? NULL : &E.row[E.cursor_y];
 
   // navigating via wasd
-  switch (key) 
+  switch (key)
     {
       case ARROW_LEFT:
         if(E.cursor_x != 0)
           E.cursor_x--;
         // left arrow at the end of line
-        else if (E.cursor_y > 0) 
+        else if (E.cursor_y > 0)
           {
             E.cursor_y--;
             E.cursor_x = E.row[E.cursor_y].size;
@@ -710,7 +710,7 @@ void editor_navigate_cursor(int key)
         if(row && E.cursor_x < row->size)
           E.cursor_x++;
         // right arrow on begining of line
-        else if (row && E.cursor_x == row->size) 
+        else if (row && E.cursor_x == row->size)
           {
             E.cursor_y++;
             E.cursor_x = 0;
@@ -721,7 +721,7 @@ void editor_navigate_cursor(int key)
         if(E.cursor_y != 0)
           E.cursor_y--;
         break;
-        
+
       case ARROW_DOWN:
         if(E.cursor_y < E.num_rows)
           E.cursor_y++;
@@ -771,7 +771,7 @@ void editor_process_keypress()
           editor_set_status_message("Can't save !");
         break;
       }
-      
+
       // Navigation keys
       case ARROW_LEFT:
       case ARROW_RIGHT:
@@ -788,6 +788,9 @@ void editor_process_keypress()
       // Deletion keys
       case BACKSPACE:
       case CTRL_KEY('h'):
+      case DEL_KEY:
+        if (c == DEL_KEY)
+          editor_navigate_cursor(ARROW_RIGHT);
         editor_delete_char();
         break;
 
@@ -801,8 +804,8 @@ void editor_process_keypress()
 
 /************************** init *************************/
 void init_editor()
-{ 
-  if(get_windows_size(&E.screen_rows,&E.screen_cols) == -1) 
+{
+  if(get_windows_size(&E.screen_rows,&E.screen_cols) == -1)
     die("get_windows_size");
 
   E.cursor_x = 0;
