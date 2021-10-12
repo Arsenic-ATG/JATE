@@ -365,20 +365,21 @@ void editor_insert_char(char c)
   E.cursor_x++;
 }
 
-void editor_delete_char(int key)
+void editor_delete_char()
 {
-  if (E.cursor_y == E.num_rows)
+  if(E.cursor_y == E.num_rows)
     return;
 
-  if (key == BACKSPACE || key == CTRL_KEY('h')) {
-    if (E.cursor_y == 0 && E.cursor_x == 0)
-      return;
+  if(E.cursor_y == 0 && E.cursor_x == 0)
+    return;
 
-    if (E.cursor_x > 0) {
+  if(E.cursor_x > 0)
+    {
       editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x - 1);
       E.cursor_x--;
     }
-    else {
+  else
+    {
       E.cursor_x = E.row[E.cursor_y - 1].size;
       editor_row_append_string(&E.row[E.cursor_y - 1],
                                E.row[E.cursor_y].text,
@@ -386,25 +387,6 @@ void editor_delete_char(int key)
       editor_delete_row(E.cursor_y);
       E.cursor_y--;
     }
-  } else if (key == DEL_KEY) {
-    // If the cursor is at the start of the row and the row is empty,
-    // move the row below to current row.
-    if (E.cursor_y >= 0 && E.cursor_x == 0 &&
-	    E.row[E.cursor_y].text[0] == '\0') {
-
-      // Stay within bounds, prevent undefined behavior.
-      if (E.cursor_y == E.num_rows - 1)
-        return;
-
-      editor_row_append_string(&E.row[E.cursor_y],
-                               E.row[E.cursor_y + 1].text,
-                               E.row[E.cursor_y + 1].size);
-      editor_delete_row(E.cursor_y + 1);
-    }
-    else {
-      editor_row_delete_char(&E.row[E.cursor_y], E.cursor_x);
-    }
-  }
 }
 
 void editor_insert_newline()
@@ -804,10 +786,12 @@ void editor_process_keypress()
         break;
 
       // Deletion keys
-      case DEL_KEY:
       case BACKSPACE:
       case CTRL_KEY('h'):
-        editor_delete_char(c);
+      case DEL_KEY:
+        if (c == DEL_KEY)
+          editor_navigate_cursor(ARROW_RIGHT);
+        editor_delete_char();
         break;
 
       // TODO: Handle more key combinations.
