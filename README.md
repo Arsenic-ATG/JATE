@@ -4,7 +4,7 @@ _**J**ust **A**nother **T**erminal-based **E**ditor (JATE)_ is an attempt to mak
 
 Insipred from [kilo text editor](https://github.com/antirez/kilo)
 
-## Status : Beta Version
+## Status : [Beta Version](https://github.com/Arsenic-ATG/Text-Editor/releases)
 
 The editor can now :
 - [x] View already existing file on the system. 
