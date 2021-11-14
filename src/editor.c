@@ -1,14 +1,5 @@
-/****************** macros *************************/
-
-// feature test macros
-#define _DEFAULT_SOURCE
-#define _BSD_SOURCE
-#define _GNU_SOURCE
-
-// Mask to imitate a CTRL key press on keyboard.
-#define CTRL_KEY(k) ((k)&0x1f)
-
-#define TAB_SIZE 4
+#include "editor.h"
+#include "terminal.h"
 
 /****************** headers *************************/
 #include <assert.h>
@@ -22,102 +13,11 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <termios.h>
-#include <time.h>
 #include <unistd.h>
-
-/***************** global variables **********************/
-
-enum key
-{
-  BACKSPACE = 127,
-  ARROW_UP = 1000,
-  ARROW_DOWN,
-  ARROW_LEFT,
-  ARROW_RIGHT,
-  DEL_KEY,
-  HOME_KEY,
-  END_KEY,
-  PAGE_UP,
-  PAGE_DOWN,
-};
-
-typedef struct editor_row
-{
-  int size;
-  char *text;
-  int r_size;
-  char *renderer;
-} e_row;
-
-struct editor_config
-{
-  int cursor_x, cursor_y;
-  int renderer_x;
-  int screen_rows;
-  int screen_cols;
-  int num_rows;
-  int row_offset;
-  int col_offset;
-  e_row *row;
-  bool modified;
-  char *filename;
-  char status_msg[80];
-  time_t status_msg_time;
-  struct termios orig_termios;
-};
 
 struct editor_config E;
 
-/***************** error handling ************************/
-
-void
-die (const char *s)
-{
-  write (STDOUT_FILENO, "\x1b[2J", 4);
-  write (STDOUT_FILENO, "\x1b[H", 3);
-
-  perror (s);
-  exit (1);
-}
-/***************** function Prototypes ******************/
-
-// TODO: possibly seperate them out in different headers.
-void editor_set_status_message (const char *fmt, ...);
-
 /***************** terminal *****************************/
-void
-disable_raw_mode ()
-{
-  if (tcsetattr (STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)
-    die ("tcsetattr");
-}
-
-void
-enable_raw_mode ()
-{
-  if (tcgetattr (STDIN_FILENO, &E.orig_termios) == -1)
-    die ("tcgetattr");
-
-  atexit (disable_raw_mode);
-
-  // Make sure that the changes don't take place globally.
-  struct termios raw = E.orig_termios;
-
-  // Toggle canonical mode off and also problem tracking with SIGCONT and
-  // SIGSTP.
-  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-  raw.c_oflag &= ~(OPOST);
-  raw.c_cflag |= (CS8);
-  raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-
-  // To set up timeout for input.
-  raw.c_cc[VMIN] = 0;
-  raw.c_cc[VTIME] = 1;
-
-  if (tcsetattr (STDIN_FILENO, TCSAFLUSH, &raw) == -1)
-    die ("tcgetattr");
-}
 
 int
 editor_read_key ()
@@ -207,54 +107,6 @@ editor_read_key ()
 
   else
     return c;
-}
-
-int
-get_cursor_position (int *rows, int *cols)
-{
-  char buf[32];
-  unsigned int i = 0;
-
-  if (write (STDOUT_FILENO, "\x1b[6n", 4) != 4)
-    return -1;
-
-  while (i < sizeof (buf) - 1)
-    {
-      if (read (STDIN_FILENO, &buf[i], 1) != 1)
-        break;
-      else if (buf[i] == 'R')
-        break;
-      i++;
-    }
-  buf[i] = '\0';
-
-  if (buf[0] != '\x1b' || buf[1] != '[')
-    return -1;
-  if (sscanf (&buf[2], "%d;%d", rows, cols) != 2)
-    return -1;
-
-  return 0;
-}
-
-int
-get_windows_size (int *rows, int *cols)
-{
-  struct winsize ws;
-
-  if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
-    {
-      if (write (STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12)
-        return -1;
-
-      return get_cursor_position (rows, cols);
-    }
-  else
-    {
-      // Return the current screen size of the terminal window.
-      *rows = ws.ws_row;
-      *cols = ws.ws_col;
-      return 0;
-    }
 }
 
 /************************ row operations ********************/
@@ -526,40 +378,6 @@ editor_save ()
   // Cleanup
   free (buffer);
   return false;
-}
-
-/************************ append buffer ********************/
-
-struct abuf
-{
-  char *b;
-  int len;
-};
-
-// constructor
-#define ABUF_INIT                                                             \
-  {                                                                           \
-    NULL, 0                                                                   \
-  }
-
-void
-ab_append (struct abuf *ab, const char *str, int len)
-{
-  char *new = realloc (ab->b, ab->len + len);
-
-  if (new == NULL)
-    return;
-
-  memcpy (&new[ab->len], str, len);
-  ab->b = new;
-  ab->len += len;
-}
-
-// desctructor
-void
-ab_free (struct abuf *ab)
-{
-  free (ab->b);
 }
 
 /************************* output ****************************/
@@ -866,24 +684,4 @@ init_editor ()
   E.modified = 0;
   // Leave space for status bar.
   E.screen_rows -= 2;
-}
-
-/************************** main() function *************************/
-int
-main (int argc, char *argv[])
-{
-  enable_raw_mode ();
-  init_editor ();
-  if (argc >= 2)
-    editor_open (argv[1]);
-
-  editor_set_status_message ("HELP: Ctrl-S = save | Ctrl-Q = quit");
-
-  while (1)
-    {
-      editor_refresh_screen ();
-      editor_process_keypress ();
-    }
-
-  return 0;
 }
