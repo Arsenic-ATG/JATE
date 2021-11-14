@@ -25,21 +25,28 @@ But still it can't :
 ## Platform supported 
 Linux, macOS, windows(with cygwin)
 
+## Prerequisites
+
+- [Cmake](https://cmake.org)
+- [C compiler](https://en.wikipedia.org/wiki/Compiler)
+
 ## Get it running 
 
-- git clone or download 
+- `git clone` or download.
 
-- navigate to the repository  
+- Navigate to the repository.
 
-- run a `make` command on your terminal to compile source ( if you don't have gnu-make then you can also manually compile the source code (src/editor.c) with a standard C compiler )
+- Run [`cmake .`](https://cmake.org/cmake/help/latest/manual/cmake.1.html) command and let CMake generate a [Makefile](https://en.wikipedia.org/wiki/Make_(software)) according to your system configuration.
 
-- run exectuatable with the name `editor` 
+- Run a `make` command on your terminal to compile source.
 
+- Run exectuatable with the name `JATE`.
 
 ```bash
 $ cd text-editor
+$ cmake .
 $ make
-$ ./editor <optional: file name that you want to open>
+$ ./JATE <optional: file name that you want to open>
 ```
 
 ## Thank You for visiting 
