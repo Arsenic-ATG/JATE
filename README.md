@@ -1,5 +1,5 @@
 # J.A.T.E.
-_**J**ust **A**nother **T**erminal-based **E**ditor (JATE)_ is an attempt to make a fully functional bare bones text editor in C ( without any dependencies by directly anipulating terminal via [V100 escape sequences](https://vt100.net/docs/vt100-ug/chapter3.html) )
+_**J**ust **A**nother **T**erminal-based **E**ditor (JATE)_ is an attempt to make a fully functional bare bones text editor in C ( without any dependencies by directly manipulating terminal via [V100 escape sequences](https://vt100.net/docs/vt100-ug/chapter3.html) )
 
 Insipred from [kilo text editor](https://github.com/antirez/kilo)
 
